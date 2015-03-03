@@ -1,0 +1,46 @@
+package dk.itu.turbocharger.parsing
+
+class PushdownAutomaton[C] {
+  case class Element(label : String)
+  case class State(label : String) {
+    case class Transition(pop : Option[Element], input : Option[C],
+        push : Option[Element], to : State) {
+      def from() = State.this
+      addTransition(this)
+      override def toString =
+        s"(${from} ---[${pop.getOrElse("")}/${input.getOrElse("")}/${push.getOrElse("")}]--> ${to})"
+    }
+    object BasicTransition {
+      def apply(input : C, to : State) =
+        Transition(None, Some(input), None, to)
+    }
+    object DefaultTransition {
+      def apply(to : State) = Transition(None, None, None, to)
+    }
+  }
+  type Transition = State#Transition
+
+  private var transitions :
+      Map[State, Map[(Option[Element], Option[C]), Transition]] = Map()
+
+  private def getTransitions(s : State) = transitions.getOrElse(s, Map())
+  private def addTransition(t : Transition) =
+    transitions +=
+      (t.from -> (getTransitions(t.from) + ((t.pop, t.input) -> t)))
+
+  case class Execution(position : State, stack : Seq[Element]) {
+    def accept(input : C) : Option[(Transition, Execution)] = {
+      val transitions = getTransitions(position)
+      val transition =
+        transitions.get((stack.headOption, Some(input))).orElse(
+            transitions.get((None, Some(input)))).orElse(
+            transitions.get((None, None)))
+      transition match {
+        case Some(t) =>
+          Some((t, Execution(t.to, t.push.toSeq ++ stack.drop(t.pop.size))))
+        case _ =>
+          None
+      }
+    }
+  }
+}
