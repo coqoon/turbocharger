@@ -62,6 +62,24 @@ class DecoratedDocument(
     initialPosition.map(ip => (ip, result))
   }
 
+  /* If there are any tokens partly contained within @viewRegion, then
+   * return them, along with the document-relative offset of the first token
+   * fragment. */
+  def getPartialTokens(region : Region) : Option[(Int, Tokens)] = {
+    var initialPosition : Option[Int] = None
+    var result : Tokens = Seq()
+    for ((pos, (t, s)) <- getTokensWithPositions) {
+      val tokenRegion = Region(pos, length = s.length)
+      region.intersection(tokenRegion).foreach(intersection => {
+        if (initialPosition == None)
+          initialPosition = Some(intersection.start)
+        result :+= (t, s.substring(
+            intersection.start - pos, intersection.end - pos))
+      })
+    }
+    initialPosition.map(ip => (ip, result))
+  }
+
   def getTokensWithPositions() : Stream[(Int, Token)] = {
     var pos = 0
     tokens.toStream.map(t => try ((pos, t)) finally pos += t._2.length)
