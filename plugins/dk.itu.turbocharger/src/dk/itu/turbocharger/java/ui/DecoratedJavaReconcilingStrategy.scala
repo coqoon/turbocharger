@@ -30,14 +30,16 @@ class DecoratedJavaReconcilingStrategy(
         import scala.collection.JavaConversions._
         Option(doc.getCompilationUnit) match {
           case Some(cu : CompilationUnit) =>
-            for (i <- cu.types.flatMap(TryCast[TypeDeclaration]);
-                 m <- i.getMethods) {
+            import dk.itu.turbocharger.java.ASTUtilities.children
+            import org.eclipse.jdt.core.dom._
+            for (t <- children[TypeDeclaration](cu);
+                 m <- children[MethodDeclaration](t)) {
               val body = m.getBody
               val viewRegion =
                 Region(body.getStartPosition, length = body.getLength)
               val region = javaView.toSingleDocumentRegion(viewRegion)
-              println(s"The body of '${m.getName}' contains the following complete tokens:")
-              println(s"\t${doc.getTokens(region)}")
+              println(s"The body of '${m.getName}' contains the following partial tokens:")
+              println(s"\t${doc.getPartialTokens(region)}")
             }
             import org.eclipse.core.resources.{IMarker, IResource}
             val file = TryCast[FileEditorInput](editor.getEditorInput)
