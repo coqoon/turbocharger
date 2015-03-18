@@ -26,13 +26,9 @@ class DecoratedJavaReconcilingStrategy(
       case (Some(f), Some(p)) =>
         val doc = new DecoratedJavaDocument(f.getFile, p.getTokens)
         val javaView = doc.getJavaView
-        val parser = ASTParser.newParser(AST.JLS3)
-        parser.setSource(javaView.get.toCharArray)
-        parser.setProject(JavaCore.create(f.getFile.getProject))
-        parser.setResolveBindings(true)
 
         import scala.collection.JavaConversions._
-        Option(parser.createAST(null)) match {
+        Option(doc.getCompilationUnit) match {
           case Some(cu : CompilationUnit) =>
             for (i <- cu.types.flatMap(TryCast[TypeDeclaration]);
                  m <- i.getMethods) {
