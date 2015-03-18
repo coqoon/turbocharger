@@ -1,13 +1,16 @@
 package dk.itu.turbocharger.parsing
 
-class DecoratedDocument(tokens : DecoratedDocument.Tokens) {
+class DecoratedDocument(
+    tokens : DecoratedDocument.Tokens) extends DecoratedDocument.View {
   import DecoratedDocument._
 
-  class View(prefix : String) {
+  override def getTokens() = tokens
+
+  class TypedView(prefix : String) extends View {
     lazy val tokens = DecoratedDocument.this.getTokens.filter(contains)
-    def getTokens() = tokens
-    def get() = getTokens.flatMap(_._2).mkString
-    def contains(token : Token) = token._1.label.startsWith(prefix)
+    override def getTokens() = tokens
+
+    override def contains(token : Token) = token._1.label.startsWith(prefix)
     def toDocumentOffset(offset : Int) : Option[Int] = {
       var viewPos = 0
       for ((realPos, q @ (t, s)) <-
@@ -43,8 +46,6 @@ class DecoratedDocument(tokens : DecoratedDocument.Tokens) {
       toDocumentRegions(viewRegion).reduce((r1, r2) => r1.union(r2))
   }
 
-  /* Returns all the tokens in this document. */
-  def getTokens() : Tokens = tokens
   /* If there are any tokens completely contained within @viewRegion, then
    * return them, along with the document-relative offset of the first one. */
   def getTokens(region : Region) : Option[(Int, Tokens)] = {
@@ -94,5 +95,10 @@ object DecoratedDocument {
         Some(Region(newStart, length = newLength))
       }
     def contains(r : Region) = (union(r) == this)
+  }
+  trait View {
+    def get() : String = getTokens.flatMap(_._2).mkString
+    def contains(token : Token) : Boolean = getTokens.contains(token)
+    def getTokens() : Tokens
   }
 }
