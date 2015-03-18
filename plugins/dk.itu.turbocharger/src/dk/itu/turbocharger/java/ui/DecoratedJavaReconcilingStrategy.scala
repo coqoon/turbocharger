@@ -24,7 +24,7 @@ class DecoratedJavaReconcilingStrategy(
     val input = TryCast[FileEditorInput](editor.getEditorInput)
     (input, editor.partitioner) match {
       case (Some(f), Some(p)) =>
-        val doc = new DecoratedJavaDocument(p.getTokens)
+        val doc = new DecoratedJavaDocument(f.getFile, p.getTokens)
         val javaView = doc.getJavaView
         val parser = ASTParser.newParser(AST.JLS3)
         parser.setSource(javaView.get.toCharArray)
