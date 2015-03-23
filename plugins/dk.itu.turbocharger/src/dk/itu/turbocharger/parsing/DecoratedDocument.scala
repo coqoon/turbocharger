@@ -1,10 +1,14 @@
 package dk.itu.turbocharger.parsing
 
 class DecoratedDocument(
-    tokens : DecoratedDocument.Tokens) extends DecoratedDocument.View {
+    private val _tokens : DecoratedDocument.Tokens) extends DecoratedDocument.View {
+  lazy val tokens = {
+    var pos = 0
+    _tokens.toStream.map(t => try ((pos, t)) finally pos += t._2.length)
+  }
   import DecoratedDocument._
 
-  override def getTokens() = tokens
+  override def getTokens() = tokens.map(_._2)
 
   class TypedView(prefix : String) extends View {
     lazy val tokens = DecoratedDocument.this.getTokens.filter(contains)
@@ -80,10 +84,7 @@ class DecoratedDocument(
     initialPosition.map(ip => (ip, result))
   }
 
-  def getTokensWithPositions() : Stream[(Int, Token)] = {
-    var pos = 0
-    tokens.toStream.map(t => try ((pos, t)) finally pos += t._2.length)
-  }
+  def getTokensWithPositions() : Stream[(Int, Token)] = tokens
 }
 object DecoratedDocument {
   type Token = (Tokeniser#Token, String)
