@@ -2,11 +2,9 @@ package dk.itu.turbocharger.parsing
 
 class DecoratedDocument(
     private val _tokens : DecoratedDocument.Tokens) extends DecoratedDocument.View {
-  lazy val tokens = {
-    var pos = 0
-    _tokens.toStream.map(t => try ((pos, t)) finally pos += t._2.length)
-  }
   import DecoratedDocument._
+
+  lazy val tokens = withPositions(_tokens)
 
   override def getTokens() = tokens.map(_._2)
 
@@ -119,5 +117,10 @@ object DecoratedDocument {
     def get() : String = getTokens.flatMap(_._2).mkString
     def contains(token : Token) : Boolean = getTokens.contains(token)
     def getTokens() : Tokens
+  }
+
+  def withPositions(ts : Tokens) = {
+    var pos = 0
+    ts.toStream.map(t => try ((pos, t)) finally pos += t._2.length)
   }
 }
