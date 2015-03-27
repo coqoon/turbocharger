@@ -16,6 +16,8 @@ class DecoratedJavaDocument(
     val parser = ASTParser.newParser(AST.JLS3)
     parser.setSource(getJavaView.get.toCharArray)
     parser.setProject(JavaCore.create(file.getProject))
+    parser.setUnitName(file.getProjectRelativePath.removeFileExtension.
+        addFileExtension(".java").makeAbsolute.toString)
     parser.setResolveBindings(true)
     parser.createAST(null).asInstanceOf[CompilationUnit]
   }
