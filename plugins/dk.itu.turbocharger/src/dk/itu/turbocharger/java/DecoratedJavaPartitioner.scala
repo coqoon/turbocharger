@@ -14,10 +14,6 @@ class DecoratedJavaPartitioner
   }
 
   def getTokens() = tokens.get
-  def getCoqView() = getTokens.filter(
-      _._1.label.startsWith(Partitioning.Coq.ContentTypes.COQ))
-  def getJavaView() = getTokens.filter(
-      _._1.label.startsWith(Partitioning.Java.ContentTypes.JAVA))
 
   /* Defer to the IDocumentPartitionerExtension2 versions of these methods */
   override def computePartitioning(
