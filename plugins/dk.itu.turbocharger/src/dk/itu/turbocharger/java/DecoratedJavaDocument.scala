@@ -44,6 +44,10 @@ object DecoratedJavaCoqDocument {
 
   trait CoqTerm extends CoqThing
 
+  class IdentifierTerm(a : String) extends CoqTerm {
+    override def toString = s"""$a"""
+  }
+
   class StringTerm(a : String) extends CoqTerm {
     override def toString = s""""$a""""
   }
