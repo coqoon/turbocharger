@@ -48,10 +48,10 @@ object DecoratedJavaCoqDocument {
         val parameters = {
           val p = method.parameters.flatMap(
               TryCast[SingleVariableDeclaration]).map(
-                  p => new StringTerm(p.getName.getIdentifier)).toList
+                  p => StringTerm(p.getName.getIdentifier)).toList
           if (method.modifiers.flatMap(TryCast[Modifier]).exists(_.isStatic)) {
             p
-          } else new StringTerm("this") +: p
+          } else StringTerm("this") +: p
         }
         val b = method.resolveBinding
         /* We might want to use getQualifiedName in future here */
@@ -64,15 +64,14 @@ object DecoratedJavaCoqDocument {
             definitionId + "_Method",
             new ConstructorInvocation3(
                 "Build_Method",
-                new ListTerm(parameters),
-                new IdentifierTerm(definitionId + "_body"),
+                ListTerm(parameters),
+                IdentifierTerm(definitionId + "_body"),
                 rvisitor(method)))
         println(mb)
         println(md)
 
         methods +=
-          new StringTerm(method.getName.getIdentifier) ->
-              new IdentifierTerm(md.name)
+          StringTerm(method.getName.getIdentifier) -> IdentifierTerm(md.name)
       } catch {
         case n : NotImplementedError =>
           println("It is NO GOOD")
@@ -85,10 +84,10 @@ object DecoratedJavaCoqDocument {
         t.getName.getIdentifier + "_Class",
         new ConstructorInvocation2(
             "Build_Class",
-            new ListTerm(fieldFragments.map(
-                f => new StringTerm(f.getName.getIdentifier))),
-            new ListTerm(
-                methods.map(m => new TupleTerm(m._1, m._2)).toList)))
+            ListTerm(fieldFragments.map(
+                f => StringTerm(f.getName.getIdentifier))),
+            ListTerm(
+                methods.map(m => TupleTerm(m._1, m._2)).toList)))
     println(cd)
   }
 
@@ -103,29 +102,29 @@ object DecoratedJavaCoqDocument {
     override def toString : String
   }
 
-  class Definition(val name : String, val value : CoqTerm) extends CoqThing {
+  case class Definition(name : String, value : CoqTerm) extends CoqThing {
     override def toString = s"""Definition ${name} := ${value}."""
   }
 
   trait CoqTerm extends CoqThing
 
-  class IdentifierTerm(val a : String) extends CoqTerm {
+  case class IdentifierTerm(a : String) extends CoqTerm {
     override def toString = s"""$a"""
   }
 
-  class StringTerm(val a : String) extends CoqTerm {
+  case class StringTerm(a : String) extends CoqTerm {
     override def toString = s""""$a""""
   }
 
-  class BooleanTerm(val a : Boolean) extends CoqTerm {
+  case class BooleanTerm(a : Boolean) extends CoqTerm {
     override def toString = s"$a"
   }
 
-  class IntegerTerm(val a : Int) extends CoqTerm {
+  case class IntegerTerm(a : Int) extends CoqTerm {
     override def toString = s"$a"
   }
 
-  class ListTerm(val a : List[_ <: CoqTerm]) extends CoqTerm {
+  case class ListTerm(a : List[_ <: CoqTerm]) extends CoqTerm {
     override def toString = stringise(a)
 
     private def stringise(a : List[_ <: CoqTerm]) : String = a match {
@@ -136,32 +135,32 @@ object DecoratedJavaCoqDocument {
     }
   }
 
-  class TupleTerm(val a : Product) extends CoqTerm {
+  case class TupleTerm(a : Product) extends CoqTerm {
     override def toString = a.productIterator.mkString("(", ", ", ")")
   }
 
   sealed trait ConstructorInvocation extends CoqTerm
-  class ConstructorInvocation0(val constructor : String
+  case class ConstructorInvocation0(constructor : String
       ) extends ConstructorInvocation {
     override def toString =
       Seq(constructor).mkString(" ")
   }
-  class ConstructorInvocation1(constructor : String,
+  case class ConstructorInvocation1(constructor : String,
       a : CoqTerm) extends ConstructorInvocation {
     override def toString =
       Seq(constructor, a).mkString("(", " ", ")")
   }
-  class ConstructorInvocation2(constructor : String,
+  case class ConstructorInvocation2(constructor : String,
       a : CoqTerm, b : CoqTerm) extends ConstructorInvocation {
     override def toString =
       Seq(constructor, a, b).mkString("(", " ", ")")
   }
-  class ConstructorInvocation3(constructor : String,
+  case class ConstructorInvocation3(constructor : String,
       a : CoqTerm, b : CoqTerm, c : CoqTerm) extends ConstructorInvocation {
     override def toString =
       Seq(constructor, a, b, c).mkString("(", " ", ")")
   }
-  class ConstructorInvocation4(constructor : String,
+  case class ConstructorInvocation4(constructor : String,
       a : CoqTerm, b : CoqTerm, c : CoqTerm, d : CoqTerm) extends ConstructorInvocation {
     override def toString =
       Seq(constructor, a, b, c, d).mkString("(", " ", ")")
@@ -170,13 +169,13 @@ object DecoratedJavaCoqDocument {
   sealed trait val_j extends CoqTerm
   object val_j {
     def vint(a : Int) : val_j =
-      new ConstructorInvocation1("vint", new IntegerTerm(a)) with val_j
+      new ConstructorInvocation1("vint", IntegerTerm(a)) with val_j
     def vbool(a : Boolean) : val_j =
-      new ConstructorInvocation1("vbool", new BooleanTerm(a)) with val_j
+      new ConstructorInvocation1("vbool", BooleanTerm(a)) with val_j
     def vptr(a : ptr_j) : val_j =
-      new ConstructorInvocation1("vptr", new TupleTerm(a)) with val_j
+      new ConstructorInvocation1("vptr", TupleTerm(a)) with val_j
     def varr(a : arrptr_j) : val_j =
-      new ConstructorInvocation1("varr", new IntegerTerm(a)) with val_j
+      new ConstructorInvocation1("varr", IntegerTerm(a)) with val_j
     def nothing() : val_j = new ConstructorInvocation0("nothing") with val_j
   }
 
@@ -185,7 +184,7 @@ object DecoratedJavaCoqDocument {
     def E_val(a : val_j) : dexpr_j =
       new ConstructorInvocation1("E_val", a) with dexpr_j
     def E_var(a : var_j) : dexpr_j =
-      new ConstructorInvocation1("E_var", new StringTerm(a)) with dexpr_j
+      new ConstructorInvocation1("E_var", StringTerm(a)) with dexpr_j
     def E_plus(a : dexpr_j, b : dexpr_j) : dexpr_j =
       new ConstructorInvocation2("E_plus", a, b) with dexpr_j
     def E_minus(a : dexpr_j, b : dexpr_j) : dexpr_j =
@@ -207,7 +206,7 @@ object DecoratedJavaCoqDocument {
   sealed trait cmd_j extends CoqTerm with ConstructorInvocation
   object cmd_j {
     def cassign(a : var_j, b : dexpr_j) : cmd_j =
-        new ConstructorInvocation2("cassign", new StringTerm(a), b) with cmd_j
+        new ConstructorInvocation2("cassign", StringTerm(a), b) with cmd_j
     def cskip() : cmd_j = new ConstructorInvocation0("cskip") with cmd_j
     def cseq(a : cmd_j, b : cmd_j) : cmd_j =
       new ConstructorInvocation2("cseq", a, b) with cmd_j
@@ -217,28 +216,28 @@ object DecoratedJavaCoqDocument {
       new ConstructorInvocation2("cwhile", a, b) with cmd_j
     def cread(a : var_j, b : var_j, c : field_j) : cmd_j =
       new ConstructorInvocation3("cread",
-          new StringTerm(a), new StringTerm(b), new StringTerm(c)) with cmd_j
+          StringTerm(a), StringTerm(b), StringTerm(c)) with cmd_j
     def cwrite(a : var_j, b : field_j, c : dexpr_j) : cmd_j =
       new ConstructorInvocation3("cwrite",
-          new StringTerm(a), new StringTerm(b), c) with cmd_j
+          StringTerm(a), StringTerm(b), c) with cmd_j
     def carrread(a : var_j, b : var_j, c : List[dexpr_j]) : cmd_j =
       new ConstructorInvocation3("carrread",
-          new StringTerm(a), new StringTerm(b), new ListTerm(c)) with cmd_j
+          StringTerm(a), StringTerm(b), ListTerm(c)) with cmd_j
     def carrwrite(a : var_j, b : List[dexpr_j], c : dexpr_j) : cmd_j =
       new ConstructorInvocation3("carrwrite",
-          new StringTerm(a), new ListTerm(b), c) with cmd_j
+          StringTerm(a), ListTerm(b), c) with cmd_j
     def carralloc(a : var_j, b : dexpr_j) : cmd_j =
-      new ConstructorInvocation2("carralloc", new StringTerm(a), b) with cmd_j
+      new ConstructorInvocation2("carralloc", StringTerm(a), b) with cmd_j
     def calloc(a : var_j, b : class_j) : cmd_j =
       new ConstructorInvocation2("calloc",
-          new StringTerm(a), new StringTerm(b)) with cmd_j
+          StringTerm(a), StringTerm(b)) with cmd_j
     def cdcall(a : var_j, b : var_j, c : method_j, d : List[dexpr_j]) : cmd_j =
-      new ConstructorInvocation4("cdcall", new StringTerm(a),
-          new StringTerm(b), new StringTerm(c), new ListTerm(d)) with cmd_j
+      new ConstructorInvocation4("cdcall",
+          StringTerm(a), StringTerm(b), StringTerm(c), ListTerm(d)) with cmd_j
     def cscall(a : var_j,
         b : class_j, c : method_j, d : List[dexpr_j]) : cmd_j =
-      new ConstructorInvocation4("cscall", new StringTerm(a),
-          new StringTerm(b), new StringTerm(c), new ListTerm(d)) with cmd_j
+      new ConstructorInvocation4("cscall",
+          StringTerm(a), StringTerm(b), StringTerm(c), ListTerm(d)) with cmd_j
     def cassert(a : dexpr_j) : cmd_j =
       new ConstructorInvocation1("cassert", a) with cmd_j
   }
