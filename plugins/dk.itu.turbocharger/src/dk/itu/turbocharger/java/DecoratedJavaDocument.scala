@@ -178,6 +178,8 @@ object DecoratedJavaCoqDocument {
       cskip
     case `cskip` :: a =>
       cseqise(a)
+    case a :: `cskip` :: Nil =>
+      a
     case a :: Nil =>
       a
     case a :: b =>
