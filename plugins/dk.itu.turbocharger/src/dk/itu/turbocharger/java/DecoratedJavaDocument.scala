@@ -502,13 +502,15 @@ object DecoratedJavaCoqDocument {
   def handleFragments(
       fragments : List[VariableDeclarationFragment]) : List[cmd_j] =
     for (f <- fragments)
-      yield (f.getInitializer match {
-        case c : ClassInstanceCreation
+      yield (Option(f.getInitializer) match {
+        case Some(c : ClassInstanceCreation)
             if c.getType.isSimpleType =>
           calloc(f.getName.getIdentifier, c.getType.asInstanceOf[
             SimpleType].getName.asInstanceOf[SimpleName].getIdentifier)
-        case q =>
+        case Some(q) =>
           cassign(f.getName.getIdentifier, evisitor(q))
+        case None =>
+          cassign(f.getName.getIdentifier, E_val(nothing))
       })
 }
 
