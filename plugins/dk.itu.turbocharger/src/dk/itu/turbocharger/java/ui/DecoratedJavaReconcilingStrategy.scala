@@ -25,6 +25,8 @@ class DecoratedJavaReconcilingStrategy(
     (input, editor.partitioner) match {
       case (Some(f), Some(p)) =>
         val doc = new DecoratedJavaDocument(f.getFile, p.getTokens)
+        dk.itu.turbocharger.java.DecoratedJavaCoqDocument.
+            generateCompletePIDEDocument(doc)
         val javaView = doc.getJavaView
 
         import scala.collection.JavaConversions._

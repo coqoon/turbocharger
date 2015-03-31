@@ -333,6 +333,8 @@ object DecoratedJavaCoqDocument {
       /* Ideally we would handle this here, but cmd_j doesn't have any way of
        * representing return statements */
       cskip
+    case a : AssertStatement =>
+      cassert(evisitor(a.getExpression))
     case q =>
       println(s"??? svisitor ${q}")
       ???
