@@ -188,6 +188,22 @@ object DecoratedJavaCoqDocument {
     (t._1, t._2, n.resolveBinding.asInstanceOf[IVariableBinding])
   }
 
+  def rvisitor(m : MethodDeclaration) : dexpr_j = {
+    import scala.collection.JavaConversions._
+    m.getReturnType2 match {
+      case p : PrimitiveType
+          if p.getPrimitiveTypeCode == PrimitiveType.VOID =>
+        E_val(nothing)
+      case t =>
+        m.getBody.statements.last match {
+          case r : ReturnStatement =>
+            evisitor(r.getExpression)
+          case _ =>
+            ???
+        }
+    }
+  }
+
   def svisitor(a : Statement) : cmd_j = a match {
     case b : Block =>
       import scala.collection.JavaConversions._
@@ -226,6 +242,10 @@ object DecoratedJavaCoqDocument {
     case e : ExpressionStatement =>
       handleExpressionStatement(e.getExpression)
     case e : EmptyStatement =>
+      cskip
+    case r : ReturnStatement =>
+      /* Ideally we would handle this here, but cmd_j doesn't have any way of
+       * representing return statements */
       cskip
     case q =>
       println(s"??? svisitor ${q}")
