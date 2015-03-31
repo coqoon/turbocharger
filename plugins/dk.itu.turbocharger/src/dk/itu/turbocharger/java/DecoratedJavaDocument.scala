@@ -207,8 +207,8 @@ object DecoratedJavaCoqDocument {
           if p.getPrimitiveTypeCode == PrimitiveType.VOID =>
         E_val(nothing)
       case t =>
-        m.getBody.statements.last match {
-          case r : ReturnStatement =>
+        m.getBody.statements.lastOption match {
+          case Some(r : ReturnStatement) =>
             evisitor(r.getExpression)
           case _ =>
             ???
