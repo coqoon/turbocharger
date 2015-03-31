@@ -34,9 +34,15 @@ object DecoratedJavaCoqDocument {
   type field_j = String
   type method_j = String
 
-  trait CoqTerm {
+  trait CoqThing {
     override def toString : String
   }
+
+  class Definition(name : String, value : CoqTerm) extends CoqThing {
+    override def toString = s"""Definition ${name} := ${value}."""
+  }
+
+  trait CoqTerm extends CoqThing
 
   class StringTerm(a : String) extends CoqTerm {
     override def toString = s""""$a""""
