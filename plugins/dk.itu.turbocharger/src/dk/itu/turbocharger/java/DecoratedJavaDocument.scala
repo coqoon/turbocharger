@@ -37,23 +37,33 @@ object DecoratedJavaCoqDocument {
   trait CoqTerm {
     override def toString : String
   }
-  implicit def stringToCt(a : String) : CoqTerm = new CoqTerm {
+
+  class StringTerm(a : String) extends CoqTerm {
     override def toString = s""""$a""""
   }
-  implicit def boolToCt(a : Boolean) : CoqTerm = new CoqTerm {
+  implicit def stringToCt(a : String) = new StringTerm(a)
+
+  class BooleanTerm(a : Boolean) extends CoqTerm {
     override def toString = s"$a"
   }
-  implicit def intToCt(a : Int) : CoqTerm = new CoqTerm {
+  implicit def boolToCt(a : Boolean) = new BooleanTerm(a)
+
+  class IntegerTerm(a : Int) extends CoqTerm {
     override def toString = s"$a"
   }
-  implicit def listToCt(a : List[_ <: CoqTerm]) : CoqTerm = new CoqTerm {
+  implicit def intToCt(a : Int) = new IntegerTerm(a)
+
+  class ListTerm(a : List[_ <: CoqTerm]) extends CoqTerm {
     override def toString = a.mkString("", " :: ", "nil")
   }
-  implicit def pairToCt(a : (_ <: CoqTerm, _ <: CoqTerm)) = new CoqTerm {
-    override def toString = s"(${a._1}, ${a._2})"
-  }
+  implicit def listToCt(a : List[_ <: CoqTerm]) = new ListTerm(a)
 
-  implicit def ptr_jToCt(a : ptr_j) = pairToCt((a._1, a._2))
+  class TupleTerm(a : Product) extends CoqTerm {
+    override def toString = a.productIterator.mkString("(", ", ", ")")
+  }
+  implicit def tupleToCt(a : Product) = new TupleTerm(a)
+
+  implicit def ptr_jToCt(a : ptr_j) = tupleToCt((a._1, a._2))
 
   sealed trait ConstructorInvocation extends CoqTerm
   class ConstructorInvocation0(constructor : String
