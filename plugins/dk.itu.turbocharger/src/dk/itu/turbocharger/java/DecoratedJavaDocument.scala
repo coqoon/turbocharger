@@ -27,6 +27,71 @@ class DecoratedJavaDocument(
 import org.eclipse.jdt.core.dom.{ASTNode, ASTVisitor}
 
 object DecoratedJavaCoqDocument {
+  import ASTUtilities.children
+  import dk.itu.coqoon.core.utilities.TryCast
+  import org.eclipse.jdt.core.dom.TypeDeclaration
+
+  def generateCompletePIDEDocument(doc : DecoratedJavaDocument) = {
+    doc.getCompilationUnit.accept(new InfoVisitor)
+    for (t <- children[TypeDeclaration](doc.getCompilationUnit))
+      generateDefinitionsForType(t)
+  }
+
+  def generateDefinitionsForType(t : TypeDeclaration) : Unit = {
+    t.getTypes.foreach(generateDefinitionsForType)
+    import org.eclipse.jdt.core.dom.{Modifier, MethodDeclaration,
+      SingleVariableDeclaration, VariableDeclarationFragment}
+    import scala.collection.JavaConversions._
+    var methods : Map[StringTerm, IdentifierTerm] = Map()
+    for (method <- children[MethodDeclaration](t)) {
+      try {
+        val parameters = {
+          val p = method.parameters.flatMap(
+              TryCast[SingleVariableDeclaration]).map(
+                  p => new StringTerm(p.getName.getIdentifier)).toList
+          if (method.modifiers.flatMap(TryCast[Modifier]).exists(_.isStatic)) {
+            p
+          } else new StringTerm("this") +: p
+        }
+        val b = method.resolveBinding
+        /* We might want to use getQualifiedName in future here */
+        val definitionId =
+          s"${b.getDeclaringClass.getName}_${b.getName}"
+
+        val mb =
+          new Definition(definitionId + "_body", svisitor(method.getBody))
+        val md = new Definition(
+            definitionId + "_Method",
+            new ConstructorInvocation3(
+                "Build_Method",
+                new ListTerm(parameters),
+                new IdentifierTerm(definitionId + "_body"),
+                rvisitor(method)))
+        println(mb)
+        println(md)
+
+        methods +=
+          new StringTerm(method.getName.getIdentifier) ->
+              new IdentifierTerm(md.name)
+      } catch {
+        case n : NotImplementedError =>
+          println("It is NO GOOD")
+      }
+    }
+
+    val fieldFragments = t.getFields.flatMap(
+        _.fragments.flatMap(TryCast[VariableDeclarationFragment])).toList
+    val cd = new Definition(
+        t.getName.getIdentifier + "_Class",
+        new ConstructorInvocation2(
+            "Build_Class",
+            new ListTerm(fieldFragments.map(
+                f => new StringTerm(f.getName.getIdentifier))),
+            new ListTerm(
+                methods.map(m => new TupleTerm(m._1, m._2)).toList)))
+    println(cd)
+  }
+
   type class_j = String
   type var_j = String
   type ptr_j = (Int, class_j)
@@ -186,7 +251,6 @@ object DecoratedJavaCoqDocument {
       cseq(a, cseqise(b))
   }
 
-  import dk.itu.coqoon.core.utilities.TryCast
   import org.eclipse.jdt.core.dom._
 
   def getParts(n : Name) = {
