@@ -38,32 +38,32 @@ object DecoratedJavaCoqDocument {
     override def toString : String
   }
 
-  class Definition(name : String, value : CoqTerm) extends CoqThing {
+  class Definition(val name : String, val value : CoqTerm) extends CoqThing {
     override def toString = s"""Definition ${name} := ${value}."""
   }
 
   trait CoqTerm extends CoqThing
 
-  class IdentifierTerm(a : String) extends CoqTerm {
+  class IdentifierTerm(val a : String) extends CoqTerm {
     override def toString = s"""$a"""
   }
 
-  class StringTerm(a : String) extends CoqTerm {
+  class StringTerm(val a : String) extends CoqTerm {
     override def toString = s""""$a""""
   }
   implicit def stringToCt(a : String) = new StringTerm(a)
 
-  class BooleanTerm(a : Boolean) extends CoqTerm {
+  class BooleanTerm(val a : Boolean) extends CoqTerm {
     override def toString = s"$a"
   }
   implicit def boolToCt(a : Boolean) = new BooleanTerm(a)
 
-  class IntegerTerm(a : Int) extends CoqTerm {
+  class IntegerTerm(val a : Int) extends CoqTerm {
     override def toString = s"$a"
   }
   implicit def intToCt(a : Int) = new IntegerTerm(a)
 
-  class ListTerm(a : List[_ <: CoqTerm]) extends CoqTerm {
+  class ListTerm(val a : List[_ <: CoqTerm]) extends CoqTerm {
     override def toString = stringise(a)
 
     private def stringise(a : List[_ <: CoqTerm]) : String = a match {
@@ -75,7 +75,7 @@ object DecoratedJavaCoqDocument {
   }
   implicit def listToCt(a : List[_ <: CoqTerm]) = new ListTerm(a)
 
-  class TupleTerm(a : Product) extends CoqTerm {
+  class TupleTerm(val a : Product) extends CoqTerm {
     override def toString = a.productIterator.mkString("(", ", ", ")")
   }
   implicit def tupleToCt(a : Product) = new TupleTerm(a)
