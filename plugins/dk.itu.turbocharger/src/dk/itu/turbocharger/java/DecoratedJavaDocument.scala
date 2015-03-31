@@ -452,6 +452,30 @@ object DecoratedJavaCoqDocument {
           if c.getType.isSimpleType =>
         calloc(n.getIdentifier, c.getType.asInstanceOf[
           SimpleType].getName.asInstanceOf[SimpleName].getIdentifier)
+      case (n : SimpleName, ASSIGN, m : MethodInvocation) =>
+        import Modifier.isStatic
+        import scala.collection.JavaConversions._
+        val binding = m.resolveMethodBinding
+        val arguments =
+          m.arguments.flatMap(TryCast[Expression]).toList.map(evisitor)
+        if (Modifier.isStatic(binding.getModifiers)) {
+          cscall(
+              n.getIdentifier,
+              binding.getDeclaringClass.getName /* XXX: qualification */,
+              binding.getName,
+              arguments)
+        } else {
+          val target : var_j =
+            Option(m.getExpression) match {
+              case None =>
+                "this"
+              case Some(n : SimpleName) =>
+                n.getIdentifier
+              case _ =>
+                ???
+            }
+          cdcall(n.getIdentifier, target, binding.getName, arguments)
+        }
       case (n : Name,
             op @ (ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | TIMES_ASSIGN),
             e : Expression) =>
