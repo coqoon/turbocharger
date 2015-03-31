@@ -54,7 +54,14 @@ object DecoratedJavaCoqDocument {
   implicit def intToCt(a : Int) = new IntegerTerm(a)
 
   class ListTerm(a : List[_ <: CoqTerm]) extends CoqTerm {
-    override def toString = a.mkString("", " :: ", "nil")
+    override def toString = stringise(a)
+
+    private def stringise(a : List[_ <: CoqTerm]) : String = a match {
+      case a :: b =>
+        s"(${a} :: ${stringise(b)})"
+      case Nil =>
+        "nil"
+    }
   }
   implicit def listToCt(a : List[_ <: CoqTerm]) = new ListTerm(a)
 
