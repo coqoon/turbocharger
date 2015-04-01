@@ -120,8 +120,16 @@ object DecoratedJavaCoqDocument {
     override def toString = s"$a"
   }
 
-  case class IntegerTerm(a : Int) extends CoqTerm {
+  case class NatTerm(a : Int) extends CoqTerm {
+    assert(a >= 0)
     override def toString = s"$a"
+  }
+
+  case class ZTerm(a : Int) extends CoqTerm {
+    override def toString =
+      if (a < 0) {
+        s"($a)%Z"
+      } else s"$a%Z"
   }
 
   case class ListTerm(a : List[_ <: CoqTerm]) extends CoqTerm {
@@ -169,13 +177,13 @@ object DecoratedJavaCoqDocument {
   sealed trait val_j extends CoqTerm
   object val_j {
     def vint(a : Int) : val_j =
-      new ConstructorInvocation1("vint", IntegerTerm(a)) with val_j
+      new ConstructorInvocation1("vint", ZTerm(a)) with val_j
     def vbool(a : Boolean) : val_j =
       new ConstructorInvocation1("vbool", BooleanTerm(a)) with val_j
     def vptr(a : ptr_j) : val_j =
       new ConstructorInvocation1("vptr", TupleTerm(a)) with val_j
     def varr(a : arrptr_j) : val_j =
-      new ConstructorInvocation1("varr", IntegerTerm(a)) with val_j
+      new ConstructorInvocation1("varr", NatTerm(a)) with val_j
     def nothing() : val_j = new ConstructorInvocation0("nothing") with val_j
   }
 
