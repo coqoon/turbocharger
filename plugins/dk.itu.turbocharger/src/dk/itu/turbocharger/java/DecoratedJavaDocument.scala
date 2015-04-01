@@ -505,6 +505,9 @@ object DecoratedJavaCoqDocument {
         import Modifier.isStatic
         import scala.collection.JavaConversions._
         val binding = m.resolveMethodBinding
+        /* XXX: er, we probably need better error recovery than this! */
+        if (binding == null)
+          ???
         val arguments =
           m.arguments.flatMap(TryCast[Expression]).toList.map(evisitor)
         if (Modifier.isStatic(binding.getModifiers)) {
