@@ -349,6 +349,9 @@ object DecoratedJavaCoqDocument {
   }
 
   def evisitor(a : Expression) : dexpr_j = a match {
+    case t : ThisExpression
+        if t.getQualifier() == null =>
+      E_var("this")
     case n : NumberLiteral =>
       E_val(vint(Integer.parseInt(n.getToken)))
     case b : BooleanLiteral =>
