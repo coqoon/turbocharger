@@ -361,6 +361,10 @@ object DecoratedJavaCoqDocument {
     case p : PrefixExpression =>
       import PrefixExpression.Operator._
       (p.getOperator, p.getOperand) match {
+        case (PLUS, e) =>
+          evisitor(e)
+        case (MINUS, e) =>
+          E_minus(E_val(vint(0)), evisitor(e))
         case (NOT, e) =>
           E_not(evisitor(e))
         case _ =>
