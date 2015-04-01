@@ -463,34 +463,10 @@ object DecoratedJavaCoqDocument {
   def handleAssignment(a : Assignment) : cmd_j = {
     import Assignment.Operator._
     (a.getLeftHandSide, a.getOperator, a.getRightHandSide) match {
-      case (n : SimpleName, ASSIGN, c : ClassInstanceCreation)
-          if c.getType.isSimpleType =>
-        calloc(n.getIdentifier, c.getType.asInstanceOf[
-          SimpleType].getName.asInstanceOf[SimpleName].getIdentifier)
+      case (n : SimpleName, ASSIGN, c : ClassInstanceCreation) =>
+        handleUnpackedAssignment(n, c)
       case (n : SimpleName, ASSIGN, m : MethodInvocation) =>
-        import Modifier.isStatic
-        import scala.collection.JavaConversions._
-        val binding = m.resolveMethodBinding
-        val arguments =
-          m.arguments.flatMap(TryCast[Expression]).toList.map(evisitor)
-        if (Modifier.isStatic(binding.getModifiers)) {
-          cscall(
-              n.getIdentifier,
-              binding.getDeclaringClass.getName /* XXX: qualification */,
-              binding.getName,
-              arguments)
-        } else {
-          val target : var_j =
-            Option(m.getExpression) match {
-              case None =>
-                "this"
-              case Some(n : SimpleName) =>
-                n.getIdentifier
-              case _ =>
-                ???
-            }
-          cdcall(n.getIdentifier, target, binding.getName, arguments)
-        }
+        handleUnpackedAssignment(n, m)
       case (n : Name,
             op @ (ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | TIMES_ASSIGN),
             e : Expression) =>
@@ -517,16 +493,43 @@ object DecoratedJavaCoqDocument {
   def handleFragments(
       fragments : List[VariableDeclarationFragment]) : List[cmd_j] =
     for (f <- fragments)
-      yield (Option(f.getInitializer) match {
-        case Some(c : ClassInstanceCreation)
-            if c.getType.isSimpleType =>
-          calloc(f.getName.getIdentifier, c.getType.asInstanceOf[
-            SimpleType].getName.asInstanceOf[SimpleName].getIdentifier)
-        case Some(q) =>
-          cassign(f.getName.getIdentifier, evisitor(q))
-        case None =>
-          cassign(f.getName.getIdentifier, E_val(nothing))
-      })
+      yield handleUnpackedAssignment(f.getName, f.getInitializer)
+
+  def handleUnpackedAssignment(n : SimpleName, e : Expression) : cmd_j =
+    Option(e) match {
+      case Some(c : ClassInstanceCreation)
+          if c.getType.isSimpleType =>
+        calloc(n.getIdentifier, c.getType.asInstanceOf[
+          SimpleType].getName.asInstanceOf[SimpleName].getIdentifier)
+      case Some(m : MethodInvocation) =>
+        import Modifier.isStatic
+        import scala.collection.JavaConversions._
+        val binding = m.resolveMethodBinding
+        val arguments =
+          m.arguments.flatMap(TryCast[Expression]).toList.map(evisitor)
+        if (Modifier.isStatic(binding.getModifiers)) {
+          cscall(
+              n.getIdentifier,
+              binding.getDeclaringClass.getName /* XXX: qualification */,
+              binding.getName,
+              arguments)
+        } else {
+          val target : var_j =
+            Option(m.getExpression) match {
+              case None =>
+                "this"
+              case Some(n : SimpleName) =>
+                n.getIdentifier
+              case _ =>
+                ???
+            }
+          cdcall(n.getIdentifier, target, binding.getName, arguments)
+        }
+      case Some(q) =>
+        cassign(n.getIdentifier, evisitor(q))
+      case None =>
+        cassign(n.getIdentifier, E_val(nothing))
+    }
 }
 
 class InfoVisitor extends ASTVisitor {
