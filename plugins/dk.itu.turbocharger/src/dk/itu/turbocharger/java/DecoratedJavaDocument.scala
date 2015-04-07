@@ -533,6 +533,18 @@ object DecoratedJavaCoqDocument {
       case None =>
         cassign(n.getIdentifier, E_val(nothing))
     }
+
+  class UnsupportedException(
+      val node : ASTNode, val message : String) extends Exception(message)
+  object UnsupportedException {
+    def apply(node : ASTNode, message : String) =
+      new UnsupportedException(node, message)
+    def unapply(t : Throwable) = t match {
+      case n : UnsupportedException =>
+        Some((n.node, n.message))
+      case _ => None
+    }
+  }
 }
 
 class InfoVisitor extends ASTVisitor {
