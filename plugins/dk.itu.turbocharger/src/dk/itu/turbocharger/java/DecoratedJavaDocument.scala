@@ -535,7 +535,11 @@ object DecoratedJavaCoqDocument {
     for (f <- fragments)
       yield handleUnpackedAssignment(f.getName, f.getInitializer)
 
-  def handleUnpackedAssignment(n : SimpleName, e : Expression) : cmd_j =
+  def handleUnpackedAssignment(n : SimpleName, e : Expression) : cmd_j = {
+    val nameBinding = n.resolveBinding.asInstanceOf[IVariableBinding]
+    if (nameBinding.isField)
+      throw UnsupportedException(n,
+          "Assignments with potential side effects cannot write to fields")
     Option(e) match {
       case Some(c : ClassInstanceCreation)
           if c.getType.isSimpleType =>
@@ -582,6 +586,7 @@ object DecoratedJavaCoqDocument {
       case None =>
         cassign(n.getIdentifier, E_val(nothing))
     }
+  }
 
   class UnsupportedException(
       val node : ASTNode, val message : String) extends Exception(message)
