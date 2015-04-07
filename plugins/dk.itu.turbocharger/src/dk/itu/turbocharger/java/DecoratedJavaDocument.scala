@@ -38,6 +38,9 @@ object DecoratedJavaCoqDocument {
   }
 
   def generateDefinitionsForType(t : TypeDeclaration) : Unit = {
+    if (!t.typeParameters.isEmpty)
+      throw UnsupportedException(t,
+          "Type parameters are not supported")
     t.getTypes.foreach(generateDefinitionsForType)
     import org.eclipse.jdt.core.dom.{Modifier, MethodDeclaration,
       SingleVariableDeclaration, VariableDeclarationFragment}
@@ -45,6 +48,9 @@ object DecoratedJavaCoqDocument {
     var methods : Map[StringTerm, IdentifierTerm] = Map()
     for (method <- children[MethodDeclaration](t)) {
       try {
+        if (!method.typeParameters.isEmpty)
+          throw UnsupportedException(method,
+              "Type parameters are not supported")
         val parameters = {
           val p = method.parameters.flatMap(
               TryCast[SingleVariableDeclaration]).map(
@@ -532,7 +538,14 @@ object DecoratedJavaCoqDocument {
           if c.getType.isSimpleType =>
         calloc(n.getIdentifier, c.getType.asInstanceOf[
           SimpleType].getName.asInstanceOf[SimpleName].getIdentifier)
+      case Some(c : ClassInstanceCreation)
+          if c.getType.isParameterizedType =>
+        throw UnsupportedException(c,
+            "Type parameters are not supported")
       case Some(m : MethodInvocation) =>
+        if (!m.typeArguments.isEmpty)
+          throw UnsupportedException(m,
+              "Type parameters are not supported")
         import Modifier.isStatic
         import scala.collection.JavaConversions._
         val binding = m.resolveMethodBinding
