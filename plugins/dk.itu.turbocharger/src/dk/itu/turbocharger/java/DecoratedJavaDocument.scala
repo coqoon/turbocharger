@@ -291,11 +291,28 @@ object DecoratedJavaCoqDocument {
           if p.getPrimitiveTypeCode == PrimitiveType.VOID =>
         E_val(nothing)
       case t =>
-        /* XXX: we also need to forbid multiple returns */
-        m.getBody.statements.lastOption match {
-          case Some(r : ReturnStatement) =>
-            evisitor(r.getExpression)
-          case _ =>
+        var expr : Option[(ReturnStatement, dexpr_j)] = None
+        m.accept(new ASTVisitor {
+          override def preVisit(n : ASTNode) = expr.foreach(e =>
+            throw UnsupportedException(e._1,
+                "Early return from a method is not supported"))
+          override def visit(r : ReturnStatement) = {
+            val parent = Option(r.getParent)
+            (parent, parent.map(_.getParent)) match {
+              case (Some(b : Block), Some(m : MethodDeclaration)) =>
+                expr = Some((r, evisitor(r.getExpression)))
+              case _ =>
+                throw UnsupportedException(r,
+                    "Conditional or otherwise nested returns are not " +
+                    "supported")
+            }
+            false
+          }
+        })
+        expr match {
+          case Some((_, e)) =>
+            e
+          case None =>
             throw UnsupportedException(m,
                 "Non-void methods must end with a return statement")
         }
