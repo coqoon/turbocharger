@@ -303,6 +303,8 @@ object DecoratedJavaCoqDocument {
   }
 
   def svisitor(a : Statement) : cmd_j = a match {
+    case null =>
+      cskip
     case b : Block =>
       import scala.collection.JavaConversions._
       cseqise(b.statements.flatMap(TryCast[Statement]).map(svisitor(_)).toList)
