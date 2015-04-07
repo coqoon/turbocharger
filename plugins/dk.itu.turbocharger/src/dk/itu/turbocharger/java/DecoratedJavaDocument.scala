@@ -73,8 +73,10 @@ object DecoratedJavaCoqDocument {
         methods +=
           StringTerm(method.getName.getIdentifier) -> IdentifierTerm(md.name)
       } catch {
+        case UnsupportedException(q, a) =>
+          Console.err.println(s"($q): $a")
         case n : NotImplementedError =>
-          println("It is NO GOOD")
+          Console.err.println("It is NO GOOD")
       }
     }
 
@@ -289,11 +291,13 @@ object DecoratedJavaCoqDocument {
           if p.getPrimitiveTypeCode == PrimitiveType.VOID =>
         E_val(nothing)
       case t =>
+        /* XXX: we also need to forbid multiple returns */
         m.getBody.statements.lastOption match {
           case Some(r : ReturnStatement) =>
             evisitor(r.getExpression)
           case _ =>
-            ???
+            throw UnsupportedException(m,
+                "Non-void methods must end with a return statement")
         }
     }
   }
@@ -344,8 +348,8 @@ object DecoratedJavaCoqDocument {
     case a : AssertStatement =>
       cassert(evisitor(a.getExpression))
     case q =>
-      println(s"??? svisitor ${q}")
-      ???
+      throw UnsupportedException(q,
+          "Statements of this form are not supported")
   }
 
   def evisitor(a : Expression) : dexpr_j = a match {
@@ -368,7 +372,8 @@ object DecoratedJavaCoqDocument {
         case (NOT, e) =>
           E_not(evisitor(e))
         case _ =>
-          ???
+          throw UnsupportedException(p,
+              "Prefix expressions of this form are not supported")
       }
     case p : ParenthesizedExpression =>
       evisitor(p.getExpression)
@@ -403,11 +408,12 @@ object DecoratedJavaCoqDocument {
           E_not(E_eq(evisitor(l), evisitor(r)))
 
         case q =>
-          ???
+          throw UnsupportedException(i,
+              "Infix expressions of this form are not supported")
       }
     case q =>
-      println(s"??? evisitor ${q}")
-      ???
+      throw UnsupportedException(q,
+          "Expressions of this form are not supported")
   }
 
   def handleExpressionStatement(e : Expression) : cmd_j =
@@ -434,9 +440,11 @@ object DecoratedJavaCoqDocument {
             }
             if (!binding.isField) {
               cassign(simplePart, exprv)
-            } else ???
-          case q =>
-            ???
+            } else throw UnsupportedException(n,
+                "Only local variables can appear in expressions")
+          case (q, _) =>
+            throw UnsupportedException(a,
+                "Postfix expression statements of this form are not supported")
         }
       case a : PrefixExpression =>
         import PrefixExpression.Operator._
@@ -451,13 +459,16 @@ object DecoratedJavaCoqDocument {
             }
             if (!binding.isField) {
               cassign(simplePart, exprv)
-            } else ???
-          case q =>
-            ???
+            } else throw UnsupportedException(n,
+                "Only local variables can appear in expressions")
+          case (_, q) =>
+            throw UnsupportedException(a,
+                "Prefix expression statements of this form are not supported")
         }
 
       case q =>
-        ???
+        throw UnsupportedException(q,
+            "Expression statements of this form are not supported")
     }
 
   def handleAssignment(a : Assignment) : cmd_j = {
@@ -480,13 +491,16 @@ object DecoratedJavaCoqDocument {
             E_minus(E_var(simplePart), evisitor(e))
           case TIMES_ASSIGN if !binding.isField =>
             E_times(E_var(simplePart), evisitor(e))
-          case _ => ???
+          case _ =>
+            throw UnsupportedException(n,
+                "Assignment operators of this form are not supported")
         }
         if (binding.isField) {
           cwrite(qualPart, simplePart, exprv)
         } else cassign(simplePart, exprv)
       case q =>
-        ???
+        throw UnsupportedException(a,
+            "Assignments of this form are not supported")
     }
   }
 
@@ -524,7 +538,9 @@ object DecoratedJavaCoqDocument {
               case Some(n : SimpleName) =>
                 n.getIdentifier
               case _ =>
-                ???
+                throw UnsupportedException(m.getExpression,
+                    "Using more than one level of indirection in method " +
+                    "calls is not supported")
             }
           cdcall(n.getIdentifier, target, binding.getName, arguments)
         }
