@@ -289,6 +289,9 @@ object DecoratedJavaCoqDocument {
   }
 
   def rvisitor(m : MethodDeclaration) : dexpr_j = {
+    /* Constructors don't technically return anything */
+    if (m.isConstructor)
+      return E_val(nothing)
     import scala.collection.JavaConversions._
     m.getReturnType2 match {
       case p : PrimitiveType
