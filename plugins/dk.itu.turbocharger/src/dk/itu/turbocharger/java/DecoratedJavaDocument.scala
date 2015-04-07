@@ -73,8 +73,6 @@ object DecoratedJavaCoqDocument {
         methods +=
           StringTerm(method.getName.getIdentifier) -> IdentifierTerm(md.name)
       } catch {
-        case UnsupportedException(q, a) =>
-          Console.err.println(s"($q): $a")
         case n : NotImplementedError =>
           Console.err.println("It is NO GOOD")
       }

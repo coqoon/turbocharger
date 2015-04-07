@@ -11,7 +11,7 @@ import dk.itu.turbocharger.java.DecoratedJavaDocument
 class DecoratedJavaReconcilingStrategy(
     editor : DecoratedJavaEditor) extends IReconcilingStrategy {
   import org.eclipse.jdt.core.JavaCore
-  import org.eclipse.jdt.core.dom.{AST, ASTParser}
+  import org.eclipse.jdt.core.dom.{AST, Message, ASTParser}
 
   import DecoratedDocument.Region
   import DecoratedJavaReconcilingStrategy._
@@ -24,9 +24,20 @@ class DecoratedJavaReconcilingStrategy(
     val input = TryCast[FileEditorInput](editor.getEditorInput)
     (input, editor.partitioner) match {
       case (Some(f), Some(p)) =>
+        import dk.itu.turbocharger.java.DecoratedJavaCoqDocument
+        import DecoratedJavaCoqDocument.{UnsupportedException, generateCompletePIDEDocument}
         val doc = new DecoratedJavaDocument(f.getFile, p.getTokens)
-        dk.itu.turbocharger.java.DecoratedJavaCoqDocument.
-            generateCompletePIDEDocument(doc)
+
+        val pideDoc : Either[UnsupportedException, Unit] =
+          try {
+            Right(generateCompletePIDEDocument(doc))
+          } catch {
+            case e : UnsupportedException =>
+              Left(e)
+          }
+        val syntheticMessages = pideDoc.left.toOption.map(e => new Message(
+            e.message, e.node.getStartPosition, e.node.getLength)).toSeq
+
         val javaView = doc.getJavaView
 
         import scala.collection.JavaConversions._
@@ -47,7 +58,7 @@ class DecoratedJavaReconcilingStrategy(
             val file = TryCast[FileEditorInput](editor.getEditorInput)
             file.foreach(_.getFile.deleteMarkers(
                 dk.itu.coqoon.core.ManifestIdentifiers.MARKER_PROBLEM, false, IResource.DEPTH_ZERO))
-            for (m <- cu.getMessages;
+            for (m <- (cu.getMessages ++ syntheticMessages);
                  r @ Region(start, length) <- javaView.toDocumentRegions(
                      Region(m.getStartPosition, length = m.getLength))) {
               import scala.collection.JavaConversions._
