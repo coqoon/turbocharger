@@ -346,7 +346,7 @@ object DecoratedJavaCoqDocument {
       var result = List[cmd_j]()
       f.initializers.toList match {
         case (v : VariableDeclarationExpression) :: Nil =>
-          result ++= handleFragments(v.fragments.flatMap(
+          result ++= handleLocalFragments(v.fragments.flatMap(
               TryCast[VariableDeclarationFragment]).toList)
         case f if f.forall(_.isInstanceOf[Assignment]) =>
           result ++= f.map(a => handleAssignment(a.asInstanceOf[Assignment]))
@@ -361,7 +361,7 @@ object DecoratedJavaCoqDocument {
       cseqise(result)
     case v : VariableDeclarationStatement =>
       import scala.collection.JavaConversions._
-      cseqise(handleFragments(v.fragments.flatMap(
+      cseqise(handleLocalFragments(v.fragments.flatMap(
           TryCast[VariableDeclarationFragment]).toList))
     case e : ExpressionStatement =>
       handleExpressionStatement(e.getExpression)
@@ -455,7 +455,7 @@ object DecoratedJavaCoqDocument {
     e match {
       case v : VariableDeclarationExpression =>
         import scala.collection.JavaConversions._
-        cseqise(handleFragments(v.fragments.flatMap(
+        cseqise(handleLocalFragments(v.fragments.flatMap(
             TryCast[VariableDeclarationFragment]).toList))
       case a : Assignment =>
         handleAssignment(a)
@@ -508,51 +508,72 @@ object DecoratedJavaCoqDocument {
 
   def handleAssignment(a : Assignment) : cmd_j = {
     import Assignment.Operator._
-    (a.getLeftHandSide, a.getOperator, a.getRightHandSide) match {
-      case (n : SimpleName, ASSIGN, c : ClassInstanceCreation) =>
-        handleUnpackedAssignment(n, c)
-      case (n : SimpleName, ASSIGN, m : MethodInvocation) =>
-        handleUnpackedAssignment(n, m)
-      case (n : Name,
-            op @ (ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | TIMES_ASSIGN),
+    val leftName = expandNameLike(a.getLeftHandSide)
+    (leftName, a.getOperator, a.getRightHandSide) match {
+      case (_, ASSIGN, _) =>
+        handlePotentialFieldAssignment(a.getLeftHandSide, a.getRightHandSide)
+      case (ls :: Nil,
+            op @ (PLUS_ASSIGN | MINUS_ASSIGN | TIMES_ASSIGN),
             e : Expression) =>
-        val (qualPart, simplePart, binding) = getParts(n)
         val exprv = op match {
-          case ASSIGN =>
-            evisitor(e)
-          case PLUS_ASSIGN if !binding.isField =>
-            E_plus(E_var(simplePart), evisitor(e))
-          case MINUS_ASSIGN if !binding.isField =>
-            E_minus(E_var(simplePart), evisitor(e))
-          case TIMES_ASSIGN if !binding.isField =>
-            E_times(E_var(simplePart), evisitor(e))
+          case PLUS_ASSIGN =>
+            E_plus(E_var(ls), evisitor(e))
+          case MINUS_ASSIGN =>
+            E_minus(E_var(ls), evisitor(e))
+          case TIMES_ASSIGN =>
+            E_times(E_var(ls), evisitor(e))
           case _ =>
-            throw UnsupportedException(n,
-                "Assignment operators of this form are not supported")
+            throw UnsupportedException(a,
+                "Compound assignment operators of this form are not supported")
         }
-        if (binding.isField) {
-          cwrite(qualPart, simplePart, exprv)
-        } else cassign(simplePart, exprv)
+        cassign(ls, exprv)
       case q =>
         throw UnsupportedException(a,
             "Assignments of this form are not supported")
     }
   }
 
-  def handleFragments(
+  def handleLocalFragments(
       fragments : List[VariableDeclarationFragment]) : List[cmd_j] =
     for (f <- fragments)
-      yield handleUnpackedAssignment(f.getName, f.getInitializer)
+      yield handlePotentialFieldAssignment(f.getName, f.getInitializer)
 
-  def handleUnpackedAssignment(n : SimpleName, e : Expression) : cmd_j = {
-    val nameBinding = n.resolveBinding.asInstanceOf[IVariableBinding]
-    if (nameBinding.isField)
-      throw UnsupportedException(n,
-          "Assignments with potential side effects cannot write to fields")
+  def handlePotentialFieldAssignment(
+      left : ASTNode, right : Expression) : cmd_j = {
+    val (lhs, rhs) = (expandNameLike(left), expandNameLike(right))
+    (lhs, rhs) match {
+      case ((lq :: ls :: rest), _)
+          if rest != Nil =>
+        throw UnsupportedException(left,
+            "The left hand side of this assignment is too deeply qualified")
+      case (_, (rq :: rs :: rest))
+          if rest != Nil =>
+        throw UnsupportedException(right,
+            "The right hand side of this assignment is too deeply qualified")
+      case ((ls :: lq), (rs :: rq))
+          if lq != Nil && rq != Nil =>
+        throw UnsupportedException(left.getParent,
+            "Assigning from one field directly to another is not supported")
+      case ((lq :: ls :: Nil), (rs :: Nil)) =>
+        cwrite(lq, ls, E_var(rs))
+      case ((ls :: Nil), (rs :: Nil)) =>
+        cassign(ls, E_var(rs))
+      case ((ls :: Nil), (rs :: rq :: Nil)) =>
+        cread(ls, rs, rq)
+      case ((ls :: Nil), (Nil)) =>
+        handleLocalAssignment(ls, right)
+      case _ =>
+        println("???", left, lhs, right, rhs)
+        throw UnsupportedException(left.getParent,
+            "This potential field assignment is not supported")
+    }
+  }
+
+  def handleLocalAssignment(n : String, e : Expression) : cmd_j = {
     Option(e) match {
       case Some(c : ClassInstanceCreation)
           if c.getType.isSimpleType =>
-        calloc(n.getIdentifier, c.getType.asInstanceOf[
+        calloc(n, c.getType.asInstanceOf[
           SimpleType].getName.asInstanceOf[SimpleName].getIdentifier)
       case Some(c : ClassInstanceCreation)
           if c.getType.isParameterizedType =>
@@ -572,7 +593,7 @@ object DecoratedJavaCoqDocument {
           m.arguments.flatMap(TryCast[Expression]).toList.map(evisitor)
         if (Modifier.isStatic(binding.getModifiers)) {
           cscall(
-              n.getIdentifier,
+              n,
               binding.getDeclaringClass.getName /* XXX: qualification */,
               binding.getName,
               arguments)
@@ -588,12 +609,12 @@ object DecoratedJavaCoqDocument {
                     "Using more than one level of indirection in method " +
                     "calls is not supported")
             }
-          cdcall(n.getIdentifier, target, binding.getName, arguments)
+          cdcall(n, target, binding.getName, arguments)
         }
       case Some(q) =>
-        cassign(n.getIdentifier, evisitor(q))
+        cassign(n, evisitor(q))
       case None =>
-        cassign(n.getIdentifier, E_val(nothing))
+        cassign(n, E_val(nothing))
     }
   }
 
