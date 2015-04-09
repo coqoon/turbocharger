@@ -387,7 +387,16 @@ object DecoratedJavaCoqDocument {
     case b : BooleanLiteral =>
       E_val(vbool(b.booleanValue))
     case n : SimpleName =>
-      E_var(n.getIdentifier)
+      expandNameLike(n) match {
+        case sn :: Nil =>
+          E_var(sn)
+        case qn :: rest =>
+          throw UnsupportedException(n,
+              "Field accesses cannot appear as part of an expression")
+        case Nil =>
+          throw UnsupportedException(n,
+              "This name specifies neither a variable nor a field")
+      }
     case p : PrefixExpression =>
       import PrefixExpression.Operator._
       (p.getOperator, p.getOperand) match {
