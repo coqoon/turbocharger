@@ -588,6 +588,25 @@ object DecoratedJavaCoqDocument {
     }
   }
 
+  def variableBinding(n : Name) =
+    TryCast[IVariableBinding](n.resolveBinding)
+
+  def expandNameLike(n : ASTNode) : List[String] = n match {
+    case sn : SimpleName
+        if variableBinding(sn).exists(_.isField) =>
+      List("this", sn.getIdentifier)
+    case sn : SimpleName =>
+      List(sn.getIdentifier)
+    case qn : QualifiedName =>
+      expandNameLike(qn.getQualifier) :+ qn.getName.getIdentifier
+    case fa : FieldAccess =>
+      expandNameLike(fa.getExpression) :+ fa.getName.getIdentifier
+    case te : ThisExpression =>
+      Option(te.getQualifier).toList.flatMap(expandNameLike) :+ "this"
+    case _ =>
+      List()
+  }
+
   class UnsupportedException(
       val node : ASTNode, val message : String) extends Exception(message)
   object UnsupportedException {
