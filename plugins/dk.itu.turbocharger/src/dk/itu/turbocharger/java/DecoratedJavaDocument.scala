@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.dom.{ASTNode, ASTVisitor}
 object DecoratedJavaCoqDocument {
   import ASTUtilities.children
   import dk.itu.coqoon.core.utilities.TryCast
+  import dk.itu.turbocharger.coq._
   import org.eclipse.jdt.core.dom.TypeDeclaration
 
   def generateCompletePIDEDocument(doc : DecoratedJavaDocument) = {
@@ -103,82 +104,6 @@ object DecoratedJavaCoqDocument {
   type arrptr_j = Int
   type field_j = String
   type method_j = String
-
-  trait CoqThing {
-    override def toString : String
-  }
-
-  case class Definition(name : String, value : CoqTerm) extends CoqThing {
-    override def toString = s"""Definition ${name} := ${value}."""
-  }
-
-  trait CoqTerm extends CoqThing
-
-  case class IdentifierTerm(a : String) extends CoqTerm {
-    override def toString = s"""$a"""
-  }
-
-  case class StringTerm(a : String) extends CoqTerm {
-    override def toString = s""""$a""""
-  }
-
-  case class BooleanTerm(a : Boolean) extends CoqTerm {
-    override def toString = s"$a"
-  }
-
-  case class NatTerm(a : Int) extends CoqTerm {
-    assert(a >= 0)
-    override def toString = s"$a"
-  }
-
-  case class ZTerm(a : Int) extends CoqTerm {
-    override def toString =
-      if (a < 0) {
-        s"($a)%Z"
-      } else s"$a%Z"
-  }
-
-  case class ListTerm(a : List[_ <: CoqTerm]) extends CoqTerm {
-    override def toString = stringise(a)
-
-    private def stringise(a : List[_ <: CoqTerm]) : String = a match {
-      case a :: b =>
-        s"(${a} :: ${stringise(b)})"
-      case Nil =>
-        "nil"
-    }
-  }
-
-  case class TupleTerm(a : Product) extends CoqTerm {
-    override def toString = a.productIterator.mkString("(", ", ", ")")
-  }
-
-  sealed trait ConstructorInvocation extends CoqTerm
-  case class ConstructorInvocation0(constructor : String
-      ) extends ConstructorInvocation {
-    override def toString =
-      Seq(constructor).mkString(" ")
-  }
-  case class ConstructorInvocation1(constructor : String,
-      a : CoqTerm) extends ConstructorInvocation {
-    override def toString =
-      Seq(constructor, a).mkString("(", " ", ")")
-  }
-  case class ConstructorInvocation2(constructor : String,
-      a : CoqTerm, b : CoqTerm) extends ConstructorInvocation {
-    override def toString =
-      Seq(constructor, a, b).mkString("(", " ", ")")
-  }
-  case class ConstructorInvocation3(constructor : String,
-      a : CoqTerm, b : CoqTerm, c : CoqTerm) extends ConstructorInvocation {
-    override def toString =
-      Seq(constructor, a, b, c).mkString("(", " ", ")")
-  }
-  case class ConstructorInvocation4(constructor : String,
-      a : CoqTerm, b : CoqTerm, c : CoqTerm, d : CoqTerm) extends ConstructorInvocation {
-    override def toString =
-      Seq(constructor, a, b, c, d).mkString("(", " ", ")")
-  }
 
   sealed trait val_j extends CoqTerm
   object val_j {
