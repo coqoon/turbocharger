@@ -50,8 +50,20 @@ object Charge {
     def cassign(a : var_j, b : dexpr_j) : cmd_j =
         new ConstructorInvocation2("cassign", StringTerm(a), b) with cmd_j
     def cskip() : cmd_j = new ConstructorInvocation0("cskip") with cmd_j
-    def cseq(a : cmd_j, b : cmd_j) : cmd_j =
-      new ConstructorInvocation2("cseq", a, b) with cmd_j
+    def cseq(a : cmd_j*) : cmd_j = a match {
+      case Seq() =>
+        cskip
+      case (c : ConstructorInvocation0) :+ tail
+          if c.constructor == "cskip" =>
+        cseq(a : _*)
+      case a +: (c : ConstructorInvocation0) +: Seq()
+          if c.constructor == "cskip" =>
+        a
+      case a +: Seq() =>
+        a
+      case a +: b =>
+        new ConstructorInvocation2("cseq", a, cseq(b : _*)) with cmd_j
+    }
     def cif(a : dexpr_j, b : cmd_j, c : cmd_j) : cmd_j =
       new ConstructorInvocation3("cif", a, b, c) with cmd_j
     def cwhile(a : dexpr_j, b : cmd_j) : cmd_j =
@@ -82,20 +94,5 @@ object Charge {
           StringTerm(a), StringTerm(b), StringTerm(c), ListTerm(d)) with cmd_j
     def cassert(a : dexpr_j) : cmd_j =
       new ConstructorInvocation1("cassert", a) with cmd_j
-  }
-
-  def cseqise(cs : List[cmd_j]) : cmd_j = cs match {
-    case Nil =>
-      cmd_j.cskip
-    case (c : ConstructorInvocation0) :: a
-        if c.constructor == "cskip" =>
-      cseqise(a)
-    case a :: (c : ConstructorInvocation0) :: Nil
-        if c.constructor == "cskip" =>
-      a
-    case a :: Nil =>
-      a
-    case a :: b =>
-      cmd_j.cseq(a, cseqise(b))
   }
 }

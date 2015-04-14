@@ -159,16 +159,15 @@ object DecoratedJavaCoqDocument {
       cskip
     case b : Block =>
       import scala.collection.JavaConversions._
-      cseqise(b.statements.flatMap(TryCast[Statement]).map(svisitor(_)).toList)
+      cseq(b.statements.flatMap(TryCast[Statement]).map(svisitor(_)) : _*)
     case i : IfStatement =>
       cif(evisitor(i.getExpression),
           svisitor(i.getThenStatement), svisitor(i.getElseStatement()))
     case w : WhileStatement =>
       cwhile(evisitor(w.getExpression), svisitor(w.getBody))
     case d : DoStatement =>
-      cseqise(List(
-          svisitor(d.getBody),
-          cwhile(evisitor(d.getExpression), svisitor(d.getBody))))
+      cseq(svisitor(d.getBody),
+           cwhile(evisitor(d.getExpression), svisitor(d.getBody)))
     case f : ForStatement =>
       import scala.collection.JavaConversions._
       var result = List[cmd_j]()
@@ -183,14 +182,12 @@ object DecoratedJavaCoqDocument {
           TryCast[Expression]).map(handleExpressionStatement).toList
       result :+=
         cwhile(evisitor(f.getExpression),
-               cseqise(List(
-                   svisitor(f.getBody),
-                   cseqise(updaters))))
-      cseqise(result)
+               cseq(svisitor(f.getBody), cseq(updaters : _*)))
+      cseq(result : _*)
     case v : VariableDeclarationStatement =>
       import scala.collection.JavaConversions._
-      cseqise(handleLocalFragments(v.fragments.flatMap(
-          TryCast[VariableDeclarationFragment]).toList))
+      cseq(handleLocalFragments(v.fragments.flatMap(
+          TryCast[VariableDeclarationFragment]).toList) : _*)
     case e : ExpressionStatement =>
       handleExpressionStatement(e.getExpression)
     case e : EmptyStatement =>
@@ -283,8 +280,8 @@ object DecoratedJavaCoqDocument {
     e match {
       case v : VariableDeclarationExpression =>
         import scala.collection.JavaConversions._
-        cseqise(handleLocalFragments(v.fragments.flatMap(
-            TryCast[VariableDeclarationFragment]).toList))
+        cseq(handleLocalFragments(v.fragments.flatMap(
+            TryCast[VariableDeclarationFragment]).toList) : _*)
       case a : Assignment =>
         handleAssignment(a)
 
