@@ -109,7 +109,7 @@ object DecoratedJavaCoqDocument {
         (q.getQualifier.getFullyQualifiedName.toString,
             q.getName.getIdentifier)
     }
-    (t._1, t._2, n.resolveBinding.asInstanceOf[IVariableBinding])
+    (t._1, t._2, variableBinding(n))
   }
 
   import cmd_j._
@@ -292,13 +292,16 @@ object DecoratedJavaCoqDocument {
         (a.getOperand, a.getOperator) match {
           case (n : Name, op @ (DECREMENT | INCREMENT)) =>
             val (qualPart, simplePart, binding) = getParts(n)
-            val exprv = op match {
-              case DECREMENT if !binding.isField =>
+            val exprv = (op, binding) match {
+              case (DECREMENT, Some(binding)) if !binding.isField =>
                 E_minus(E_var(simplePart), E_val(vint(1)))
-              case INCREMENT if !binding.isField =>
+              case (INCREMENT, Some(binding)) if !binding.isField =>
                 E_plus(E_var(simplePart), E_val(vint(1)))
+              case (_, None) =>
+                throw UnsupportedException(n,
+                    "This name does not refer to a variable in scope")
             }
-            if (!binding.isField) {
+            if (binding.exists(!_.isField)) {
               cassign(simplePart, exprv)
             } else throw UnsupportedException(n,
                 "Only local variables can appear in expressions")
@@ -311,13 +314,16 @@ object DecoratedJavaCoqDocument {
         (a.getOperator, a.getOperand) match {
           case (op @ (DECREMENT | INCREMENT), n : Name) =>
             val (qualPart, simplePart, binding) = getParts(n)
-            val exprv = op match {
-              case DECREMENT if !binding.isField =>
+            val exprv = (op, binding) match {
+              case (DECREMENT, Some(binding)) if !binding.isField =>
                 E_minus(E_var(simplePart), E_val(vint(1)))
-              case INCREMENT if !binding.isField =>
+              case (INCREMENT, Some(binding)) if !binding.isField =>
                 E_plus(E_var(simplePart), E_val(vint(1)))
+              case (_, None) =>
+                throw UnsupportedException(n,
+                    "This name does not refer to a variable in scope")
             }
-            if (!binding.isField) {
+            if (binding.exists(!_.isField)) {
               cassign(simplePart, exprv)
             } else throw UnsupportedException(n,
                 "Only local variables can appear in expressions")
