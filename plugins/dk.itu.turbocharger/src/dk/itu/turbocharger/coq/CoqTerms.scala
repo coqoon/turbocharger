@@ -17,7 +17,7 @@ case class IdentifierTerm(a : String) extends CoqTerm {
 }
 
 case class StringTerm(a : String) extends CoqTerm {
-  override def toString = s""""$a""""
+  override def toString = s""" "$a" """ /* XXX: Parser bug in pide_notes? */
 }
 
 case class BooleanTerm(a : Boolean) extends CoqTerm {
