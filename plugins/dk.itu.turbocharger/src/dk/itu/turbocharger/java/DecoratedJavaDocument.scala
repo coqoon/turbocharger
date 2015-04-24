@@ -34,20 +34,21 @@ object DecoratedJavaCoqDocument {
   import org.eclipse.jdt.core.dom.TypeDeclaration
 
   def generateCompletePIDEDocument(doc : DecoratedJavaDocument) = {
-    doc.getCompilationUnit.accept(new InfoVisitor)
-    for (t <- children[TypeDeclaration](doc.getCompilationUnit))
-      generateDefinitionsForType(t)
+    val definitions =
+      (for (t <- children[TypeDeclaration](doc.getCompilationUnit))
+        yield generateDefinitionsForType(t)).flatten
+    definitions
   }
 
-  def generateDefinitionsForType(t : TypeDeclaration) : Unit = {
+  def generateDefinitionsForType(t : TypeDeclaration) : Seq[Definition] = {
     if (!t.typeParameters.isEmpty)
       throw UnsupportedException(t,
           "Type parameters are not supported")
-    t.getTypes.foreach(generateDefinitionsForType)
+    val subtypeDefinitions = t.getTypes.flatMap(generateDefinitionsForType)
     import org.eclipse.jdt.core.dom.{Modifier, MethodDeclaration,
       SingleVariableDeclaration, VariableDeclarationFragment}
     import scala.collection.JavaConversions._
-    var methods : Map[StringTerm, IdentifierTerm] = Map()
+    var methods : Seq[(StringTerm, Definition, Definition)] = Seq()
     for (method <- children[MethodDeclaration](t)) {
       try {
         if (!method.typeParameters.isEmpty)
@@ -75,28 +76,26 @@ object DecoratedJavaCoqDocument {
                 ListTerm(parameters),
                 IdentifierTerm(definitionId + "_body"),
                 rvisitor(method)))
-        println(mb)
-        println(md)
 
-        methods +=
-          StringTerm(method.getName.getIdentifier) -> IdentifierTerm(md.name)
+        methods :+= (StringTerm(method.getName.getIdentifier), mb, md)
       } catch {
         case n : NotImplementedError =>
           Console.err.println("It is NO GOOD")
       }
     }
 
+    val methodDefinitions = methods.flatMap(m => Seq(m._2, m._3))
     val fieldFragments = t.getFields.flatMap(
         _.fragments.flatMap(TryCast[VariableDeclarationFragment])).toList
-    val cd = new Definition(
+    subtypeDefinitions ++ methodDefinitions :+ new Definition(
         t.getName.getIdentifier + "_Class",
         new ConstructorInvocation2(
             "Build_Class",
             ListTerm(fieldFragments.map(
                 f => StringTerm(f.getName.getIdentifier))),
             ListTerm(
-                methods.map(m => TupleTerm(m._1, m._2)).toList)))
-    println(cd)
+                methods.map(m =>
+                  TupleTerm(m._1, IdentifierTerm(m._3.name))).toList)))
   }
 
   import org.eclipse.jdt.core.dom._
