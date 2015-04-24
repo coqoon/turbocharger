@@ -13,6 +13,9 @@ class DecoratedJavaReconcilingStrategy(
   import org.eclipse.jdt.core.JavaCore
   import org.eclipse.jdt.core.dom.{AST, Message, ASTParser}
 
+  import dk.itu.turbocharger.{coq => TCoq}
+  private val dp = new TCoq.DispatchPool
+
   import DecoratedDocument.Region
   import DecoratedJavaReconcilingStrategy._
   override def reconcile(r : IRegion) =
@@ -28,7 +31,7 @@ class DecoratedJavaReconcilingStrategy(
         import DecoratedJavaCoqDocument.{UnsupportedException, generateCompletePIDEDocument}
         val doc = new DecoratedJavaDocument(f.getFile, p.getTokens)
 
-        val pideDoc : Either[UnsupportedException, Unit] =
+        val pideDoc : Either[UnsupportedException, List[TCoq.Definition]] =
           try {
             Right(generateCompletePIDEDocument(doc))
           } catch {
@@ -37,6 +40,9 @@ class DecoratedJavaReconcilingStrategy(
           }
         val syntheticMessages = pideDoc.left.toOption.map(e => new Message(
             e.message, e.node.getStartPosition, e.node.getLength)).toSeq
+        pideDoc.right.foreach(doc => {
+          dp.defineDocument(doc.map(_.toString))
+        })
 
         val javaView = doc.getJavaView
 
