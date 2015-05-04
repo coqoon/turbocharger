@@ -1,12 +1,14 @@
 package dk.itu.turbocharger.java.ui
 
+import dk.itu.coqoon.core.ManifestIdentifiers.MARKER_PROBLEM
+import dk.itu.turbocharger.java.DecoratedJavaDocument
 import dk.itu.turbocharger.parsing.DecoratedDocument
 import org.eclipse.core.runtime.IProgressMonitor
 import org.eclipse.jface.text.{IRegion, IDocument}
 import org.eclipse.jface.text.reconciler.{
   DirtyRegion, IReconcilingStrategy, IReconcilingStrategyExtension}
 import org.eclipse.jdt.core.dom.{TypeDeclaration, CompilationUnit}
-import dk.itu.turbocharger.java.DecoratedJavaDocument
+
 
 class DecoratedJavaReconcilingStrategy(
     editor : DecoratedJavaEditor) extends IReconcilingStrategy {
@@ -63,22 +65,12 @@ class DecoratedJavaReconcilingStrategy(
             import org.eclipse.core.resources.{IMarker, IResource}
             val file = TryCast[FileEditorInput](editor.getEditorInput)
             file.foreach(_.getFile.deleteMarkers(
-                dk.itu.coqoon.core.ManifestIdentifiers.MARKER_PROBLEM, false, IResource.DEPTH_ZERO))
-            for (m <- (cu.getMessages ++ syntheticMessages);
-                 r @ Region(start, length) <- javaView.toDocumentRegions(
-                     Region(m.getStartPosition, length = m.getLength))) {
-              import scala.collection.JavaConversions._
-              val mark = f.getFile.createMarker(
-                  dk.itu.coqoon.core.ManifestIdentifiers.MARKER_PROBLEM)
-              println("Created marker " + mark)
-              mark.setAttributes(Map(
-                  (IMarker.MESSAGE, m.getMessage),
-                  (IMarker.SEVERITY, IMarker.SEVERITY_ERROR),
-                  (IMarker.LOCATION, s"offset ${start}"),
-                  (IMarker.CHAR_START, start),
-                  (IMarker.CHAR_END, r.end),
-                  (IMarker.TRANSIENT, true)))
-            }
+                MARKER_PROBLEM, false, IResource.DEPTH_ZERO))
+            (cu.getMessages ++ syntheticMessages).foreach(
+                m => spreadError(
+                    f.getFile, m.getMessage,
+                    Region(m.getStartPosition, length = m.getLength),
+                    javaView))
           case _ =>
             None
         }
@@ -91,6 +83,28 @@ class DecoratedJavaReconcilingStrategy(
     document = Option(d)
 }
 object DecoratedJavaReconcilingStrategy {
+  import org.eclipse.jdt.core.dom.Message
+  import org.eclipse.core.resources.{IFile, IMarker}
+  import DecoratedDocument.Region
+  /* Creates one or more markers to represent an error message pertaining to a
+   * particular region in a typed view. (If the given region crosses a type
+   * boundary, more than one marker will be created.) */
+  def spreadError(f : IFile,
+      s : String, r : Region, v : DecoratedDocument#TypedView) = {
+    for (r @ Region(start, length) <- v.toDocumentRegions(r)) yield {
+      import scala.collection.JavaConversions._
+      val mark = f.createMarker(MARKER_PROBLEM)
+      println("Created marker " + mark)
+      mark.setAttributes(Map(
+          (IMarker.MESSAGE, s),
+          (IMarker.SEVERITY, IMarker.SEVERITY_ERROR),
+          (IMarker.LOCATION, s"offset ${start}"),
+          (IMarker.CHAR_START, start),
+          (IMarker.CHAR_END, r.end),
+          (IMarker.TRANSIENT, true)))
+      mark
+    }
+  }
   def rts(r : IRegion) =
     s"IRegion(length=${r.getLength}, offset=${r.getOffset})"
   def drts(dr : DirtyRegion) =
