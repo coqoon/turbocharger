@@ -18,17 +18,33 @@ class DispatchPool {
 
   private var lastDocumentID = 0
 
+  var lastCommands : Seq[Command] = Seq()
+
+  def makeZanyDiff(a : Seq[Command], b : Seq[Command]) =
+    PIDEDiff.makeZanyDiff(
+        (a : Command, b : Command) => (a.id == b.id))(a, b).toList
+
   def defineDocument(document : Seq[String]) =
     SessionManager.executeWithSessionLock(session => {
       import XML.Encode._
 
-      val commands = document.map(c => requireID(c))
+      val commands = document.map(c => Command(
+          requireID(c), Document.Node.Name("Placeholder.v"),
+          List(), Command_Span.unparsed(c))).toList
+      val diff = makeZanyDiff(lastCommands, commands)
 
-      val nextDocumentID = getNextID
-      new ProtocolPunt("coq", session).update(
-          lastDocumentID, nextDocumentID, List())
+      if (!diff.isEmpty) {
+        val documentID = getNextID
+        new ProtocolPunt("coq", session).update(
+            lastDocumentID, documentID,
+            List(
+              (Document.Node.Name("Placeholder.v"),
+               Document.Node.Edits[(Option[Command], Option[Command]),
+                 Command.Perspective](diff))))
 
-      println(document.mkString("\n"))
+        lastDocumentID = documentID
+        lastCommands = commands
+      }
     })
 
   private var commandMappings : Map[String, Int] = Map()
