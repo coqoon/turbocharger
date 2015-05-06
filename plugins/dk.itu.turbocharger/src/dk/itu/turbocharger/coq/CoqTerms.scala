@@ -10,6 +10,10 @@ case class Definition(name : String, value : CoqTerm) extends CoqCommand {
   override def toString = s"""Definition ${name} := ${value}."""
 }
 
+case class ArbitrarySentence(content : String) extends CoqCommand {
+  override def toString = content
+}
+
 trait CoqTerm extends CoqThing
 
 case class IdentifierTerm(a : String) extends CoqTerm {
