@@ -86,10 +86,18 @@ object DecoratedJavaCoqDocument {
 
         lastEnd = method.getStartPosition + method.getLength
 
-        pt.map(pt => {
-          val (start, (token, content)) = pt
-          (ArbitrarySentence(content.drop(2).dropRight(2)),
-              Some(Region(start + 2, length = content.length - 4)))
+        (pt.flatMap {
+          case (start, (token, content)) =>
+            /* Strip the leading and trailing antiquote bits from this token
+             * and extract all the sentences that it contains */
+            var pos = 2
+            for ((c, s) <- getNextSentences(content, 2, content.length - 2))
+              yield {
+                try {
+                  (ArbitrarySentence(c.toString),
+                      Some(Region(start + pos, length = c.length)))
+                } finally pos += c.length
+              }
         })
       }
     proofs.flatten
