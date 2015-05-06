@@ -34,7 +34,7 @@ class DecoratedJavaReconcilingStrategy(
         import DecoratedJavaCoqDocument.{UnsupportedException, generateCompletePIDEDocument}
         val doc = new DecoratedJavaDocument(f.getFile, p.getTokens)
 
-        val pideDoc : Either[UnsupportedException, List[Definition]] =
+        val pideDoc =
           try {
             Right(generateCompletePIDEDocument(doc))
           } catch {
