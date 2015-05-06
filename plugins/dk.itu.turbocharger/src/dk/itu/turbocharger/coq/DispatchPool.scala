@@ -41,7 +41,7 @@ class DispatchPool(val name : String) {
 
       val commands = document.map(c => Command(
           requireID(c), Document.Node.Name(getNodeName),
-          List(), Command_Span.unparsed(c))).toList
+          List(), parseSpan(c))).toList
       val diff = makeZanyDiff(lastCommands, commands)
 
       if (!diff.isEmpty) {
@@ -61,18 +61,17 @@ class DispatchPool(val name : String) {
   private def define_command(content : String) =
     SessionManager.executeWithSessionLock(session => {
       val id = getNextID
-      new ProtocolPunt("coq", session).define_command(
-          Command(
-              id,
-              Document.Node.Name(getNodeName),
-              List(),
-              Command_Span.unparsed(content)))
+      new ProtocolPunt("coq", session).define_command(Command(
+          id, Document.Node.Name(getNodeName), List(), parseSpan(content)))
       id
     })
 
   private var commandMappings : Map[String, Int] = Map()
 }
 object DispatchPool {
+  private val syntax = new isabelle.Coq_Syntax
+  def parseSpan(content : String) = syntax.parse_spans(content).head
+
   private var nextID = 100
   def getNextID() = try nextID finally nextID += 1
 }
