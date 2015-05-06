@@ -28,16 +28,71 @@ import org.eclipse.jdt.core.dom.{ASTNode, ASTVisitor}
 
 object DecoratedJavaCoqDocument {
   import ASTUtilities.children
+  import DecoratedDocument.Region
   import dk.itu.coqoon.core.utilities.TryCast
   import dk.itu.turbocharger.coq._
   import dk.itu.turbocharger.coq.Charge._
   import org.eclipse.jdt.core.dom.TypeDeclaration
 
-  def generateCompletePIDEDocument(doc : DecoratedJavaDocument) = {
+  /* Returns a sequence of commands and, if appropriate, the document regions
+   * they're derived from. */
+  def generateCompletePIDEDocument(doc : DecoratedJavaDocument) :
+      Seq[(CoqCommand, Option[Region])] = {
     val definitions =
-      (for (t <- children[TypeDeclaration](doc.getCompilationUnit))
-        yield generateDefinitionsForType(t)).flatten
-    definitions
+      for (t <- children[TypeDeclaration](doc.getCompilationUnit))
+        yield {
+          generateDefinitionsForType(t).map((_, None)) ++
+              extractMethodProofs(doc, t)
+        }
+    definitions.flatten
+  }
+
+  def extractMethodProofs(doc : DecoratedJavaDocument,
+      t : TypeDeclaration) : Seq[(CoqCommand, Some[Region])] = {
+    val coqView = doc.getCoqView
+    val javaView = doc.getJavaView
+
+    var lastEnd = t.getStartPosition
+    import org.eclipse.jdt.core.dom.MethodDeclaration
+    val proofs =
+      for (method <- children[MethodDeclaration](t)) yield {
+        import dk.itu.coqoon.core.coqtop.CoqSentence.getNextSentences
+        import org.eclipse.jdt.core.dom.IMethodBinding
+        println(method.resolveBinding)
+        /* Find the specifications for this method, if there are any. (They
+         * lie in the region between the end of the last method and the start
+         * of this one.) */
+        val sr = javaView.toSingleDocumentRegion(
+            Region(lastEnd, length = method.getStartPosition - lastEnd))
+        val st =
+          doc.getPartialTokens(sr) match {
+            case Some((start, tokens)) =>
+              DecoratedDocument.withPositions(
+                  start, tokens).filter(t => coqView.contains(t._2))
+            case _ =>
+              Seq()
+          }
+
+        val pr = javaView.toSingleDocumentRegion(
+            Region(method.getStartPosition, length = method.getLength))
+        val pt =
+          doc.getPartialTokens(pr) match {
+            case Some((start, tokens)) =>
+              DecoratedDocument.withPositions(
+                  start, tokens).filter(t => coqView.contains(t._2)).toList
+            case _ =>
+              Seq()
+          }
+
+        lastEnd = method.getStartPosition + method.getLength
+
+        pt.map(pt => {
+          val (start, (token, content)) = pt
+          (ArbitrarySentence(content.drop(2).dropRight(2)),
+              Some(Region(start + 2, length = content.length - 4)))
+        })
+      }
+    proofs.flatten
   }
 
   def generateDefinitionsForType(t : TypeDeclaration) : Seq[Definition] = {

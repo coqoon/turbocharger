@@ -44,7 +44,8 @@ class DecoratedJavaReconcilingStrategy(
         val syntheticMessages = pideDoc.left.toOption.map(e => new Message(
             e.message, e.node.getStartPosition, e.node.getLength)).toSeq
         pideDoc.right.foreach(doc => {
-          dp.defineDocument(doc.map(_.toString))
+          println(doc.mkString("\n"))
+          dp.defineDocument(doc.map(_._1.toString))
         })
 
         val javaView = doc.getJavaView
