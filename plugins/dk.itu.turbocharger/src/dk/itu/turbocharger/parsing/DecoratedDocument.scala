@@ -119,8 +119,9 @@ object DecoratedDocument {
     def getTokens() : Tokens
   }
 
-  def withPositions(ts : Tokens) = {
-    var pos = 0
+  def withPositions(ts : Tokens) : Stream[(Int, Token)] = withPositions(0, ts)
+  def withPositions(start : Int, ts : Tokens) : Stream[(Int, Token)] = {
+    var pos = start
     ts.toStream.map(t => try ((pos, t)) finally pos += t._2.length)
   }
 }
