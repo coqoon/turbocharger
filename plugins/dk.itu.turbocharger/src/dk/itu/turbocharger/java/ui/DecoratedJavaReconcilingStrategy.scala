@@ -15,8 +15,9 @@ class DecoratedJavaReconcilingStrategy(
   import org.eclipse.jdt.core.JavaCore
   import org.eclipse.jdt.core.dom.{AST, Message, ASTParser}
 
-  import dk.itu.turbocharger.{coq => TCoq}
-  private val dp = new TCoq.DispatchPool
+  import dk.itu.turbocharger.coq._
+  /* XXX: this is probably a very bad way of getting a name */
+  private val dp = new DispatchPool(editor.getEditorInput.getName)
 
   import DecoratedDocument.Region
   import DecoratedJavaReconcilingStrategy._
@@ -33,7 +34,7 @@ class DecoratedJavaReconcilingStrategy(
         import DecoratedJavaCoqDocument.{UnsupportedException, generateCompletePIDEDocument}
         val doc = new DecoratedJavaDocument(f.getFile, p.getTokens)
 
-        val pideDoc : Either[UnsupportedException, List[TCoq.Definition]] =
+        val pideDoc : Either[UnsupportedException, List[Definition]] =
           try {
             Right(generateCompletePIDEDocument(doc))
           } catch {

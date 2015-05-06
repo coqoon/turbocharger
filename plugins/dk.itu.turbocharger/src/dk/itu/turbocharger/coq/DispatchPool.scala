@@ -3,8 +3,19 @@ package dk.itu.turbocharger.coq
 import dk.itu.coqoon.ui.pide.SessionManager
 import isabelle._
 
-class DispatchPool {
+/* A DispatchPool is the Turbocharger representation of a PIDE document. It
+ * automatically assigns PIDE identifiers to commands, adding them to an
+ * internal pool of commands, and converts sequences of commands into PIDE
+ * document edits which are then dispatched to the prover. */
+
+/* @name will be used as a PIDE document node name, so it should be the name of
+ * a Coq source file. */
+class DispatchPool(val name : String) {
   import DispatchPool._
+
+  private var nodeName = name
+  def getNodeName() = nodeName
+  def setNodeName(name : String) = (nodeName = name)
 
   def getID(content : String) = commandMappings.get(content)
   def requireID(content : String) = commandMappings.get(content) match {
@@ -29,7 +40,7 @@ class DispatchPool {
       import XML.Encode._
 
       val commands = document.map(c => Command(
-          requireID(c), Document.Node.Name("Placeholder.v"),
+          requireID(c), Document.Node.Name(getNodeName),
           List(), Command_Span.unparsed(c))).toList
       val diff = makeZanyDiff(lastCommands, commands)
 
@@ -38,7 +49,7 @@ class DispatchPool {
         new ProtocolPunt("coq", session).update(
             lastDocumentID, documentID,
             List(
-              (Document.Node.Name("Placeholder.v"),
+              (Document.Node.Name(getNodeName),
                Document.Node.Edits[(Option[Command], Option[Command]),
                  Command.Perspective](diff))))
 
@@ -47,25 +58,23 @@ class DispatchPool {
       }
     })
 
+  private def define_command(content : String) =
+    SessionManager.executeWithSessionLock(session => {
+      val id = getNextID
+      new ProtocolPunt("coq", session).define_command(
+          Command(
+              id,
+              Document.Node.Name(getNodeName),
+              List(),
+              Command_Span.unparsed(content)))
+      id
+    })
+
   private var commandMappings : Map[String, Int] = Map()
 }
 object DispatchPool {
-  private val syntax = new Coq_Syntax
-
   private var nextID = 100
   def getNextID() = try nextID finally nextID += 1
-
-  private def define_command(content : String) =
-    SessionManager.executeWithSessionLock(session => {
-      println(syntax.parse_spans(content))
-      new ProtocolPunt("coq", session).define_command(
-          Command(
-              nextID,
-              Document.Node.Name("Placeholder.v"),
-              List(),
-              Command_Span.unparsed(content)))
-      getNextID
-    })
 }
 
 class ProtocolPunt(name : String, session : Session) extends Protocol {
