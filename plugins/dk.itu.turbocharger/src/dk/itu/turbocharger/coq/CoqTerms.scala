@@ -10,6 +10,23 @@ case class Definition(name : String, value : CoqTerm) extends CoqCommand {
   override def toString = s"""Definition ${name} := ${value}."""
 }
 
+case class Theorem(name : String, value : CoqTerm) extends CoqCommand {
+  override def toString = s"""Theorem ${name} : ${value}."""
+}
+object Theorem {
+  case object Proof extends CoqCommand {
+    override def toString = "Proof."
+  }
+
+  case object Qed extends CoqCommand {
+    override def toString = "Qed."
+  }
+
+  case object Admitted extends CoqCommand {
+    override def toString = "Admitted."
+  }
+}
+
 case class ArbitrarySentence(content : String) extends CoqCommand {
   override def toString = content
 }
