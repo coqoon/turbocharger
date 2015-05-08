@@ -16,6 +16,10 @@ case class ArbitrarySentence(content : String) extends CoqCommand {
 
 trait CoqTerm extends CoqThing
 
+case class ArbitraryTerm(a : String) extends CoqTerm {
+  override def toString = s"""$a"""
+}
+
 case class IdentifierTerm(a : String) extends CoqTerm {
   override def toString = s"""$a"""
 }
