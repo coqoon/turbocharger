@@ -64,41 +64,46 @@ object DecoratedJavaCoqDocument {
          * of this one.) */
         val sr = javaView.toSingleDocumentRegion(
             Region(lastEnd, length = method.getStartPosition - lastEnd))
-        val st =
-          doc.getPartialTokens(sr) match {
-            case Some((start, tokens)) =>
-              DecoratedDocument.withPositions(
-                  start, tokens).filter(t => coqView.contains(t._2))
-            case _ =>
-              Seq()
+        var pre : Option[ArbitraryTerm] = None
+        var post : Option[ArbitraryTerm] = None
+        doc.getPartialTokens(sr) match {
+          case Some((start, tokens)) =>
+            DecoratedDocument.withPositions(
+                start, tokens).filter(t => coqView.contains(t._2))
+          case _ =>
+            Seq()
+        }
+
+        if (!pre.isEmpty || !post.isEmpty) {
+          /* This method has a precondition, postcondition, or both. Extract
+           * the proof that it (hopefully!) satisfies them */
+          val pr = javaView.toSingleDocumentRegion(
+              Region(method.getStartPosition, length = method.getLength))
+          val pt =
+            doc.getPartialTokens(pr) match {
+              case Some((start, tokens)) =>
+                DecoratedDocument.withPositions(
+                    start, tokens).filter(t => coqView.contains(t._2))
+              case _ =>
+                Seq()
+            }
+
+          lastEnd = method.getStartPosition + method.getLength
+
+          pt flatMap {
+            case (start, (token, content)) =>
+              /* Strip the leading and trailing antiquote bits from this token
+               * and extract all the sentences that it contains */
+              var pos = 2
+              for ((c, s) <- getNextSentences(content, 2, content.length - 2))
+                yield {
+                  try {
+                    (ArbitrarySentence(c.toString),
+                        Some(Region(start + pos, length = c.length)))
+                  } finally pos += c.length
+                }
           }
-
-        val pr = javaView.toSingleDocumentRegion(
-            Region(method.getStartPosition, length = method.getLength))
-        val pt =
-          doc.getPartialTokens(pr) match {
-            case Some((start, tokens)) =>
-              DecoratedDocument.withPositions(
-                  start, tokens).filter(t => coqView.contains(t._2)).toList
-            case _ =>
-              Seq()
-          }
-
-        lastEnd = method.getStartPosition + method.getLength
-
-        (pt.flatMap {
-          case (start, (token, content)) =>
-            /* Strip the leading and trailing antiquote bits from this token
-             * and extract all the sentences that it contains */
-            var pos = 2
-            for ((c, s) <- getNextSentences(content, 2, content.length - 2))
-              yield {
-                try {
-                  (ArbitrarySentence(c.toString),
-                      Some(Region(start + pos, length = c.length)))
-                } finally pos += c.length
-              }
-        })
+        } else Seq()
       }
     proofs.flatten
   }
