@@ -59,51 +59,21 @@ object DecoratedJavaCoqDocument {
         import dk.itu.coqoon.core.coqtop.CoqSentence.getNextSentences
         import org.eclipse.jdt.core.dom.IMethodBinding
         println(method.resolveBinding)
-        /* Find the specifications for this method, if there are any. (They
-         * lie in the region between the end of the last method and the start
-         * of this one.) */
-        val sr = javaView.toSingleDocumentRegion(
-            Region(lastEnd, length = method.getStartPosition - lastEnd))
-        var pre : Option[ArbitraryTerm] = None
-        var post : Option[ArbitraryTerm] = None
-        doc.getPartialTokens(sr) match {
-          case Some((start, tokens)) =>
-            DecoratedDocument.withPositions(
-                start, tokens).filter(t => coqView.contains(t._2))
-          case _ =>
-            Seq()
-        }
 
-        if (!pre.isEmpty || !post.isEmpty) {
-          /* This method has a precondition, postcondition, or both. Extract
-           * the proof that it (hopefully!) satisfies them */
+        import dk.itu.turbocharger.coq.ProofExtraction.extractProof
+        try {
+          /* Specifications lie in the region between the end of the last
+           * method and the start of this one... */
+          val sr = javaView.toSingleDocumentRegion(
+              Region(lastEnd, length = method.getStartPosition - lastEnd))
+          /* ... while proof content must fall somewhere in the body of this
+           * method. */
           val pr = javaView.toSingleDocumentRegion(
               Region(method.getStartPosition, length = method.getLength))
-          val pt =
-            doc.getPartialTokens(pr) match {
-              case Some((start, tokens)) =>
-                DecoratedDocument.withPositions(
-                    start, tokens).filter(t => coqView.contains(t._2))
-              case _ =>
-                Seq()
-            }
-
+          extractProof(sr, pr, doc, doc.getJavaView, doc.getCoqView)
+        } finally {
           lastEnd = method.getStartPosition + method.getLength
-
-          pt flatMap {
-            case (start, (token, content)) =>
-              /* Strip the leading and trailing antiquote bits from this token
-               * and extract all the sentences that it contains */
-              var pos = 2
-              for ((c, s) <- getNextSentences(content, 2, content.length - 2))
-                yield {
-                  try {
-                    (ArbitrarySentence(c.toString),
-                        Some(Region(start + pos, length = c.length)))
-                  } finally pos += c.length
-                }
-          }
-        } else Seq()
+        }
       }
     proofs.flatten
   }
