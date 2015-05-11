@@ -30,8 +30,9 @@ class DecoratedJavaReconcilingStrategy(
     val input = TryCast[FileEditorInput](editor.getEditorInput)
     (input, editor.partitioner) match {
       case (Some(f), Some(p)) =>
+        import dk.itu.turbocharger.java.JavaDefinitions.UnsupportedException
         import dk.itu.turbocharger.java.DecoratedJavaCoqDocument
-        import DecoratedJavaCoqDocument.{UnsupportedException, generateCompletePIDEDocument}
+        import DecoratedJavaCoqDocument.generateCompletePIDEDocument
         val doc = new DecoratedJavaDocument(f.getFile, p.getTokens)
 
         val pideDoc =
