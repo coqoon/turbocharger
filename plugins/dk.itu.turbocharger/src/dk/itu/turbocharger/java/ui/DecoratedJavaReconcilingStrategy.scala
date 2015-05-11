@@ -51,31 +51,17 @@ class DecoratedJavaReconcilingStrategy(
         val javaView = doc.getJavaView
 
         import scala.collection.JavaConversions._
-        Option(doc.getCompilationUnit) match {
-          case Some(cu : CompilationUnit) =>
-            import dk.itu.turbocharger.java.ASTUtilities.children
-            import org.eclipse.jdt.core.dom._
-            for (t <- children[TypeDeclaration](cu);
-                 m <- children[MethodDeclaration](t)) {
-              val body = m.getBody
-              val viewRegion =
-                Region(body.getStartPosition, length = body.getLength)
-              val region = javaView.toSingleDocumentRegion(viewRegion)
-              println(s"The body of '${m.getName}' contains the following partial tokens:")
-              println(s"\t${doc.getPartialTokens(region)}")
-            }
-            import org.eclipse.core.resources.{IMarker, IResource}
-            val file = TryCast[FileEditorInput](editor.getEditorInput)
-            file.foreach(_.getFile.deleteMarkers(
-                MARKER_PROBLEM, false, IResource.DEPTH_ZERO))
-            (cu.getMessages ++ syntheticMessages).foreach(
-                m => spreadError(
-                    f.getFile, m.getMessage,
-                    Region(m.getStartPosition, length = m.getLength),
-                    javaView))
-          case _ =>
-            None
-        }
+        Option(doc.getCompilationUnit).foreach(cu => {
+          import org.eclipse.core.resources.{IMarker, IResource}
+          val file = TryCast[FileEditorInput](editor.getEditorInput)
+          file.foreach(_.getFile.deleteMarkers(
+              MARKER_PROBLEM, false, IResource.DEPTH_ZERO))
+          (cu.getMessages ++ syntheticMessages).foreach(
+              m => spreadError(
+                  f.getFile, m.getMessage,
+                  Region(m.getStartPosition, length = m.getLength),
+                  javaView))
+        })
       case _ =>
     }
   }
