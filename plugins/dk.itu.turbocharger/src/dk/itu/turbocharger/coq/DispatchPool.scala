@@ -1,6 +1,6 @@
 package dk.itu.turbocharger.coq
 
-import dk.itu.coqoon.ui.pide.SessionManager
+import dk.itu.coqoon.pide.SessionManager
 import isabelle._
 
 /* A DispatchPool is the Turbocharger representation of a PIDE document. It
@@ -10,8 +10,11 @@ import isabelle._
 
 /* @name will be used as a PIDE document node name, so it should be the name of
  * a Coq source file. */
-class DispatchPool(val name : String) {
+class DispatchPool(session : SessionManager, val name : String) {
   import DispatchPool._
+
+  private var nextID = 100
+  def getNextID() = try nextID finally nextID += 1
 
   private var nodeName = name
   def getNodeName() = nodeName
@@ -36,7 +39,7 @@ class DispatchPool(val name : String) {
         (a : Command, b : Command) => (a.id == b.id))(a, b).toList
 
   def defineDocument(document : Seq[String]) =
-    SessionManager.executeWithSessionLock(session => {
+    session.executeWithSessionLock(session => {
       import XML.Encode._
 
       val commands = document.map(c => Command(
@@ -59,7 +62,7 @@ class DispatchPool(val name : String) {
     })
 
   private def define_command(content : String) =
-    SessionManager.executeWithSessionLock(session => {
+    session.executeWithSessionLock(session => {
       val id = getNextID
       new ProtocolPunt("coq", session).define_command(Command(
           id, Document.Node.Name(getNodeName), List(), parseSpan(content)))
@@ -71,9 +74,6 @@ class DispatchPool(val name : String) {
 object DispatchPool {
   private val syntax = new isabelle.Coq_Syntax
   def parseSpan(content : String) = syntax.parse_spans(content).head
-
-  private var nextID = 100
-  def getNextID() = try nextID finally nextID += 1
 }
 
 class ProtocolPunt(name : String, session : Session) extends Protocol {

@@ -10,6 +10,13 @@ class DecoratedJavaEditor extends TextEditor {
   protected def createSourceViewerConfiguration() =
     new DecoratedJavaEditorSourceViewerConfiguration(this)
 
+  private[ui] val session = new dk.itu.coqoon.ui.pide.SessionManager
+
+  override protected def dispose() = {
+    session.stop
+    super.dispose
+  }
+
   protected[ui] var partitioner : Option[DecoratedJavaPartitioner] = None
 
   private object DecoratedJavaDocumentSetupParticipant

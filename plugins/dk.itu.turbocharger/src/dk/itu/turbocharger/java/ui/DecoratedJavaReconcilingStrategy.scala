@@ -17,7 +17,8 @@ class DecoratedJavaReconcilingStrategy(
 
   import dk.itu.turbocharger.coq._
   /* XXX: this is probably a very bad way of getting a name */
-  private val dp = new DispatchPool(editor.getEditorInput.getName)
+  private val dp =
+    new DispatchPool(editor.session, editor.getEditorInput.getName)
 
   import DecoratedDocument.Region
   import DecoratedJavaReconcilingStrategy._
