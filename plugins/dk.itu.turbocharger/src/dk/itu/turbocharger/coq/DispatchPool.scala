@@ -13,13 +13,11 @@ import isabelle._
 class DispatchPool(session : SessionManager, val name : String) {
   import DispatchPool._
 
-  private var nextID = 100
-  def getNextID() = try nextID finally nextID += 1
-
   private var nodeName = name
   def getNodeName() = nodeName
   def setNodeName(name : String) = (nodeName = name)
 
+  private var commandMappings : Map[String, Long] = Map()
   def getID(content : String) = commandMappings.get(content)
   def requireID(content : String) = commandMappings.get(content) match {
     case Some(id) =>
@@ -30,7 +28,7 @@ class DispatchPool(session : SessionManager, val name : String) {
       id
   }
 
-  private var lastDocumentID = 0
+  private var lastDocumentID = 0L
 
   var lastCommands : Seq[Command] = Seq()
 
@@ -48,7 +46,7 @@ class DispatchPool(session : SessionManager, val name : String) {
       val diff = makeZanyDiff(lastCommands, commands)
 
       if (!diff.isEmpty) {
-        val documentID = getNextID
+        val documentID = Document_ID.make()
         new ProtocolPunt("coq", session).update(
             lastDocumentID, documentID,
             List(
@@ -63,13 +61,11 @@ class DispatchPool(session : SessionManager, val name : String) {
 
   private def define_command(content : String) =
     session.executeWithSessionLock(session => {
-      val id = getNextID
+      val id = Document_ID.make()
       new ProtocolPunt("coq", session).define_command(Command(
           id, Document.Node.Name(getNodeName), List(), parseSpan(content)))
       id
     })
-
-  private var commandMappings : Map[String, Int] = Map()
 }
 object DispatchPool {
   private val syntax = new isabelle.Coq_Syntax
