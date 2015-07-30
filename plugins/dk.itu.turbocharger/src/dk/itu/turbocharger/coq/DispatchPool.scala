@@ -1,6 +1,6 @@
 package dk.itu.turbocharger.coq
 
-import dk.itu.coqoon.pide.SessionManager
+import dk.itu.coqoon.ui.pide.SessionManager
 import isabelle._
 
 /* A DispatchPool is the Turbocharger representation of a PIDE document. It
