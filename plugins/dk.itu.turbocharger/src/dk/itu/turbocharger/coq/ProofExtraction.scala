@@ -2,6 +2,7 @@ package dk.itu.turbocharger.coq
 
 import dk.itu.coqoon.core.coqtop.CoqSentence.getNextSentences
 import dk.itu.turbocharger.parsing.DecoratedDocument
+import org.eclipse.jdt.core.dom.MethodDeclaration
 import DecoratedDocument.Region
 
 object ProofExtraction {
@@ -12,6 +13,7 @@ object ProofExtraction {
    * language-specific view of that document, and @coqView the Coq-specific
    * one. */
   def extractProof(
+      method : MethodDeclaration,
       sr : DecoratedDocument.Region,
       pr : DecoratedDocument.Region,
       doc : DecoratedDocument,
@@ -55,7 +57,7 @@ object ProofExtraction {
             Seq()
         }
 
-      pt flatMap {
+      val sentences = pt flatMap {
         case (start, (token, content)) =>
           /* Strip the leading and trailing antiquote bits from this token
            * and extract all the sentences that it contains */
@@ -67,7 +69,11 @@ object ProofExtraction {
                     Some(Region(start + pos, length = c.length)))
               } finally pos += c.length
             }
-      }
+        }
+
+      val identifier = method.getName.getIdentifier
+      ((Theorem(s"${identifier}_s", ArbitraryTerm("True")), None)) +:
+          ((Theorem.Proof, None) +: sentences :+ (Theorem.Qed, None))
     } else Seq()
   }
 }

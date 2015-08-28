@@ -48,7 +48,7 @@ object DecoratedJavaCoqDocument {
   }
 
   def extractMethodProofs(doc : DecoratedJavaDocument,
-      t : TypeDeclaration) : Seq[(CoqCommand, Some[Region])] = {
+      t : TypeDeclaration) : Seq[(CoqCommand, Option[Region])] = {
     val coqView = doc.getCoqView
     val javaView = doc.getJavaView
 
@@ -70,7 +70,7 @@ object DecoratedJavaCoqDocument {
            * method. */
           val pr = javaView.toSingleDocumentRegion(
               Region(method.getStartPosition, length = method.getLength))
-          extractProof(sr, pr, doc, doc.getJavaView, doc.getCoqView)
+          extractProof(method, sr, pr, doc, doc.getJavaView, doc.getCoqView)
         } finally {
           lastEnd = method.getStartPosition + method.getLength
         }
