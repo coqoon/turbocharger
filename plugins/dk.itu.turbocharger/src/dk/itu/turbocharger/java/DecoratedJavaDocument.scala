@@ -38,13 +38,42 @@ object DecoratedJavaCoqDocument {
    * they're derived from. */
   def generateCompletePIDEDocument(doc : DecoratedJavaDocument) :
       Seq[(CoqCommand, Option[Region])] = {
-    val definitions =
-      for (t <- children[TypeDeclaration](doc.getCompilationUnit))
-        yield {
-          generateDefinitionsForType(t).map((_, None)) ++
-              extractMethodProofs(doc, t)
+    val decls = children[TypeDeclaration](doc.getCompilationUnit)
+
+    val init = decls.headOption.toSeq.flatMap(firstClass => {
+      val coqView = doc.getCoqView
+      val javaView = doc.getJavaView
+      val initEnd = javaView.toDocumentOffset(firstClass.getStartPosition).get
+
+      /* XXX: This is literally copied-and-pasted from
+       * ProofExtraction.extractProof. Surely we can do better? */
+      val pt =
+        doc.getPartialTokens(Region(0, length = initEnd)) match {
+          case Some((start, tokens)) =>
+            DecoratedDocument.withPositions(
+                start, tokens).filter(t => coqView.contains(t._2))
+          case _ =>
+            Seq()
         }
-    definitions.flatten
+      import dk.itu.coqoon.core.coqtop.CoqSentence.getNextSentences
+      pt flatMap {
+        case (start, (token, content)) =>
+          /* Strip the leading and trailing antiquote bits from this token
+           * and extract all the sentences that it contains */
+          var pos = 2
+          for ((c, s) <- getNextSentences(content, 2, content.length - 2))
+            yield {
+              try {
+                (ArbitrarySentence(c.toString),
+                    Some(Region(start + pos, length = c.length)))
+              } finally pos += c.length
+            }
+      }
+    })
+
+    init ++ decls.flatMap(t =>
+      generateDefinitionsForType(t).map((_, None)) ++
+        extractMethodProofs(doc, t))
   }
 
   def extractMethodProofs(doc : DecoratedJavaDocument,
