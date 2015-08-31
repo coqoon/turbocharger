@@ -70,9 +70,20 @@ object ProofExtraction {
               } finally pos += c.length
             }
         }
+      /* XXX: copy-and-paste from
+       * DecoratedJavaDocument.generateDefinitionsForType */
+      val b = method.resolveBinding
+      val definitionId =
+        s"${b.getDeclaringClass.getName}_${b.getName}"
 
-      val identifier = method.getName.getIdentifier
-      ((Theorem(s"${identifier}_s", ArbitraryTerm("True")), None)) +:
+      ((Theorem(s"${definitionId}_s", ConstructorInvocation2(
+          "lentails",
+          IdentifierTerm("ltrue"),
+          ConstructorInvocation3(
+              "triple",
+              pre.getOrElse(ArbitraryTerm("False")),
+              IdentifierTerm(s"${definitionId}_body"),
+              post.getOrElse(ArbitraryTerm("False"))))), None)) +:
           ((Theorem.Proof, None) +: sentences :+ (Theorem.Qed, None))
     } else Seq()
   }
