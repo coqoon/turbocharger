@@ -1,31 +1,29 @@
 package dk.itu.turbocharger.java.ui
 
 import dk.itu.coqoon.core.ManifestIdentifiers.MARKER_PROBLEM
+import dk.itu.coqoon.ui.EventReconciler
 import dk.itu.turbocharger.java.DecoratedJavaDocument
 import dk.itu.turbocharger.parsing.DecoratedDocument
 import org.eclipse.core.runtime.IProgressMonitor
 import org.eclipse.jface.text.{IRegion, IDocument}
-import org.eclipse.jface.text.reconciler.{
-  DirtyRegion, IReconcilingStrategy, IReconcilingStrategyExtension}
 import org.eclipse.jdt.core.dom.{TypeDeclaration, CompilationUnit}
 
+class DecoratedJavaReconciler(
+    editor : DecoratedJavaEditor) extends EventReconciler {
+  import DecoratedJavaReconciler._
 
-class DecoratedJavaReconcilingStrategy(
-    editor : DecoratedJavaEditor) extends IReconcilingStrategy {
   import org.eclipse.jdt.core.JavaCore
   import org.eclipse.jdt.core.dom.{AST, Message, ASTParser}
 
   import dk.itu.turbocharger.coq._
   /* XXX: this is probably a very bad way of getting a name */
-  private val dp =
+  private lazy val dp =
     new DispatchPool(editor.session, editor.getEditorInput.getName)
 
+  import EventReconciler.DecoratedEvent
   import DecoratedDocument.Region
-  import DecoratedJavaReconcilingStrategy._
-  override def reconcile(r : IRegion) =
-    println(s"${this}.reconcile(${rts(r)})")
-  override def reconcile(dr : DirtyRegion, r : IRegion) = {
-    println(s"${this}.reconcile(${drts(dr)}, ${rts(r)})")
+  override def reconcile(events : List[DecoratedEvent]) = {
+    println(s"${this}.reconcile($events)")
     import dk.itu.coqoon.core.utilities.TryCast
     import org.eclipse.ui.part.FileEditorInput
     val input = TryCast[FileEditorInput](editor.getEditorInput)
@@ -67,12 +65,8 @@ class DecoratedJavaReconcilingStrategy(
       case _ =>
     }
   }
-
-  private var document : Option[IDocument] = None
-  override def setDocument(d: IDocument) =
-    document = Option(d)
 }
-object DecoratedJavaReconcilingStrategy {
+object DecoratedJavaReconciler {
   import org.eclipse.jdt.core.dom.Message
   import org.eclipse.core.resources.{IFile, IMarker}
   import DecoratedDocument.Region
@@ -95,9 +89,4 @@ object DecoratedJavaReconcilingStrategy {
       mark
     }
   }
-  def rts(r : IRegion) =
-    s"IRegion(length=${r.getLength}, offset=${r.getOffset})"
-  def drts(dr : DirtyRegion) =
-    s"DirtyRegion(length=${dr.getLength}, offset=${dr.getOffset}, " +
-    s"text=${dr.getText}, type=${dr.getType})"
 }

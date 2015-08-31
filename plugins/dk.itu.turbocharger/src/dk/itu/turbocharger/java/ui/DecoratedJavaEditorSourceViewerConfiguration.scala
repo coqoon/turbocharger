@@ -11,16 +11,6 @@ class DecoratedJavaEditorSourceViewerConfiguration(
   override def getConfiguredContentTypes(v : ISourceViewer) =
     Partitioning.TYPES
 
-  private val reconciler = CacheSlot {
-    val r = new MonoReconciler(
-        new DecoratedJavaReconcilingStrategy(editor), true)
-    r.setDelay(300)
-    r.setIsAllowedToModifyDocument(false)
-    r.setIsIncrementalReconciler(true)
-    r
-  }
-  override def getReconciler(v : ISourceViewer) = reconciler.get
-
   override def getPresentationReconciler(v : ISourceViewer) = {
     import org.eclipse.jface.text.presentation.PresentationReconciler
     val pr = new PresentationReconciler

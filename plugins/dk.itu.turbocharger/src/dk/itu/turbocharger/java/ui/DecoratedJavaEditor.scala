@@ -18,6 +18,17 @@ class DecoratedJavaEditor extends TextEditor {
     super.dispose
   }
 
+  private val reconciler = new DecoratedJavaReconciler(this)
+
+  import org.eclipse.swt.widgets.Composite
+  import org.eclipse.jface.text.source.IVerticalRuler
+  override protected def createSourceViewer(
+      parent : Composite, ruler : IVerticalRuler, styles : Int) = {
+    val viewer = super.createSourceViewer(parent, ruler, styles)
+    reconciler.install(viewer)
+    viewer
+  }
+
   protected[ui] var partitioner : Option[DecoratedJavaPartitioner] = None
 
   private object DecoratedJavaDocumentSetupParticipant
