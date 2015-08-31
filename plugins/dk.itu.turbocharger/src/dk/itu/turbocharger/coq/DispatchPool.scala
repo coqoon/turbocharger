@@ -69,7 +69,8 @@ class DispatchPool(session : SessionManager, val name : String) {
 }
 object DispatchPool {
   private val syntax = new isabelle.Coq_Syntax
-  def parseSpan(content : String) = syntax.parse_spans(content).head
+  def parseSpan(content : String) = syntax.parse_spans(content).find(
+      _.kind != isabelle.Command_Span.Ignored_Span).get
 }
 
 class ProtocolPunt(name : String, session : Session) extends Protocol {
