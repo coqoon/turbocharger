@@ -30,9 +30,9 @@ class DispatchPool(session : SessionManager, val name : String) {
 
   private var lastDocumentID = 0L
 
-  var lastCommands : Seq[Command] = Seq()
+  var lastCommands : List[Command] = List()
 
-  def makeZanyDiff(a : Seq[Command], b : Seq[Command]) =
+  def makeZanyDiff(a : List[Command], b : List[Command]) =
     PIDEDiff.makeZanyDiff(
         (a : Command, b : Command) => (a.id == b.id))(a, b).toList
 
