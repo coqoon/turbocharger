@@ -13,6 +13,17 @@ class DecoratedJavaEditor extends TextEditor {
   private[ui] val session = new dk.itu.coqoon.ui.pide.SessionManager
   session.start
 
+  import dk.itu.coqoon.core.utilities.TryCast
+  import org.eclipse.ui.IFileEditorInput
+  import org.eclipse.core.resources.IFile
+  import isabelle.Document
+  /* XXX: copied-and-pasted from PIDECoqEditor... */
+  protected[ui] def getFile() : Option[IFile] =
+    TryCast[IFileEditorInput](getEditorInput).map(_.getFile)
+  /* ... apart from the trailing ".v", required by Coq */
+  protected[ui] def getNodeName() =
+    getFile.map(file => Document.Node.Name(file.getName + ".v"))
+
   override protected def dispose() = {
     session.stop
     super.dispose
