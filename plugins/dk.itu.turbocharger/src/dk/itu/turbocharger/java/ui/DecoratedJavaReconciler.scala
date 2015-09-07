@@ -15,10 +15,8 @@ class DecoratedJavaReconciler(
   import org.eclipse.jdt.core.JavaCore
   import org.eclipse.jdt.core.dom.{AST, Message, ASTParser}
 
-  import dk.itu.turbocharger.coq._
-  /* XXX: this is probably a very bad way of getting a name */
-  private lazy val dp =
-    new DispatchPool(editor.session, editor.getEditorInput.getName)
+  import dk.itu.turbocharger.coq.PIDEDiff
+  private lazy val differ = new PIDEDiff
 
   import EventReconciler.DecoratedEvent
   import DecoratedDocument.Region
@@ -44,8 +42,17 @@ class DecoratedJavaReconciler(
         val syntheticMessages = pideDoc.left.toOption.map(e => new Message(
             e.message, e.node.getStartPosition, e.node.getLength)).toSeq
         pideDoc.right.foreach(doc => {
-          println(doc.mkString("\n"))
-          dp.defineDocument(doc.map(_._1.toString))
+          val rawEdits = differ.makeEdits(doc.map(_._1.toString.trim + "\n").toList)
+          editor.getNodeName.foreach(nodeName => {
+            import dk.itu.coqoon.ui.pide.Perspective.makeFullPerspective
+            import isabelle.Document
+            val edits : List[Document.Edit_Text] =
+              List(nodeName -> Document.Node.Edits(rawEdits),
+                   nodeName -> makeFullPerspective())
+            println(edits)
+            editor.session.executeWithSessionLock(
+                _.update(Document.Blobs.empty, edits, "coq"))
+          })
         })
 
         val javaView = doc.getJavaView
