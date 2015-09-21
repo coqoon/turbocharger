@@ -5,7 +5,7 @@ import dk.itu.turbocharger.parsing.{Tokeniser, DecoratedDocument}
 import org.eclipse.core.resources.IFile
 
 class DecoratedJavaDocument(
-    file : IFile, tokens : Seq[(Tokeniser#Token, String)])
+    val file : IFile, tokens : Seq[(Tokeniser#Token, String)])
     extends DecoratedDocument(tokens) {
   def getCoqView() = new TypedView(Partitioning.Coq.ContentTypes.COQ)
   def getJavaView() = new TypedView(Partitioning.Java.ContentTypes.JAVA)
@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.dom.{ASTNode, ASTVisitor}
 object DecoratedJavaCoqDocument {
   import ASTUtilities.children
   import DecoratedDocument.Region
+  import dk.itu.coqoon.core.model.ICoqModel
   import dk.itu.coqoon.core.utilities.TryCast
   import dk.itu.turbocharger.coq._
   import dk.itu.turbocharger.coq.Charge._
@@ -40,6 +41,10 @@ object DecoratedJavaCoqDocument {
       Seq[(CoqCommand, Option[Region])] = {
     val decls = children[TypeDeclaration](doc.getCompilationUnit)
 
+    val loadPath =
+      Option(ICoqModel.toCoqProject(doc.file.getProject)).toSeq.flatMap(
+          p => p.getLoadPath.map(
+              lpe => (ArbitrarySentence(lpe.asCommand), None)))
     val init = decls.headOption.toSeq.flatMap(firstClass => {
       val coqView = doc.getCoqView
       val javaView = doc.getJavaView
@@ -71,7 +76,7 @@ object DecoratedJavaCoqDocument {
       }
     })
 
-    init ++ decls.flatMap(t =>
+    loadPath ++ init ++ decls.flatMap(t =>
       generateDefinitionsForType(t).map((_, None)) ++
         extractMethodProofs(doc, t))
   }
