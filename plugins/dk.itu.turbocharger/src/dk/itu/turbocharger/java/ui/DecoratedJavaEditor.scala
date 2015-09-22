@@ -25,7 +25,12 @@ class DecoratedJavaEditor extends TextEditor {
   protected[ui] def getNodeName() =
     getFile.map(file => Document.Node.Name(file.getName + ".v"))
 
-  private object CommandsLock
+  /* XXX: exposing this lock to the reconciler can't possibly be a good idea */
+  private[ui] object CommandsLock
+  import dk.itu.turbocharger.coq.CoqCommand
+  import dk.itu.turbocharger.parsing.DecoratedDocument
+  private[ui] var pideDocument :
+      Seq[(CoqCommand, Option[DecoratedDocument.Region])] = Seq()
   private var lastSnapshot : Option[Document.Snapshot] = None
   private[ui] var commands : Seq[(Int, Command)] = Seq()
 

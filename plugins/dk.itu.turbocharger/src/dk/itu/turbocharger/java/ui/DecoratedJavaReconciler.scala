@@ -39,6 +39,9 @@ class DecoratedJavaReconciler(
             case e : UnsupportedException =>
               Left(e)
           }
+        editor.CommandsLock synchronized {
+          editor.pideDocument = pideDoc.right.toOption.getOrElse(Seq())
+        }
         val syntheticMessages = pideDoc.left.toOption.map(e => new Message(
             e.message, e.node.getStartPosition, e.node.getLength)).toSeq
         pideDoc.right.foreach(doc => {
