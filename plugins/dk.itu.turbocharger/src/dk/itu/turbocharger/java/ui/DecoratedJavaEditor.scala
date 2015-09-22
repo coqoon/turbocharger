@@ -1,12 +1,14 @@
 package dk.itu.turbocharger.java.ui
 
+import dk.itu.coqoon.ui.CoqGoalsContainer
 import dk.itu.turbocharger.java.{Partitioning, DecoratedJavaPartitioner}
 
 import org.eclipse.ui.editors.text.{
   TextEditor, TextFileDocumentProvider, ForwardingDocumentProvider}
 import org.eclipse.core.filebuffers.IDocumentSetupParticipant
 
-class DecoratedJavaEditor extends TextEditor {
+class DecoratedJavaEditor
+    extends TextEditor with CoqGoalsContainer {
   protected def createSourceViewerConfiguration() =
     new DecoratedJavaEditorSourceViewerConfiguration(this)
 
