@@ -120,8 +120,11 @@ object DecoratedDocument {
   }
 
   def withPositions(ts : Tokens) : Stream[(Int, Token)] = withPositions(0, ts)
-  def withPositions(start : Int, ts : Tokens) : Stream[(Int, Token)] = {
+  def withPositions(start : Int, ts : Tokens) : Stream[(Int, Token)] =
+    withPositions[Token](_._2.length)(start, ts.toStream)
+  def withPositions[A](length : A => Int)(
+      start : Int, ts : Stream[A]) : Stream[(Int, A)] = {
     var pos = start
-    ts.toStream.map(t => try ((pos, t)) finally pos += t._2.length)
+    ts.toStream.map(t => try ((pos, t)) finally pos += length(t))
   }
 }
