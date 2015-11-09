@@ -43,8 +43,8 @@ object DecoratedJavaCoqDocument {
 
     val loadPath =
       Option(ICoqModel.toCoqProject(doc.file.getProject)).toSeq.flatMap(
-          p => p.getLoadPath.map(
-              lpe => (ArbitrarySentence(lpe.asCommand), None)))
+          p => p.getLoadPath.flatMap(lpe =>
+            lpe.asCommands.map(c => (ArbitrarySentence(c), None))))
     val init = decls.headOption.toSeq.flatMap(firstClass => {
       val coqView = doc.getCoqView
       val javaView = doc.getJavaView
