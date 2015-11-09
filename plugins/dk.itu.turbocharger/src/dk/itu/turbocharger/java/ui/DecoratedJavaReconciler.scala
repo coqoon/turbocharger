@@ -39,7 +39,7 @@ class DecoratedJavaReconciler(
             case e : UnsupportedException =>
               Left(e)
           }
-        editor.CommandsLock synchronized {
+        editor.executeWithCommandsLock {
           import dk.itu.turbocharger.coq.CoqCommand
           val d = pideDoc.right.toOption.getOrElse(Seq())
           /* Before you ask, the + 1 is for the line separator that appears in
@@ -53,14 +53,8 @@ class DecoratedJavaReconciler(
         pideDoc.right.foreach(doc => {
           val rawEdits = differ.makeEdits(doc.map(_._1.toString.trim + "\n").toList)
           editor.getNodeName.foreach(nodeName => {
-            import dk.itu.coqoon.ui.pide.Perspective
             import isabelle.Document
-            val edits : List[Document.Edit_Text] =
-              List(nodeName -> Document.Node.Edits(rawEdits),
-                   nodeName -> Perspective.makeFull())
-            println(edits)
-            editor.session.executeWithSessionLock(
-                _.update(Document.Blobs.empty, edits, "coq"))
+            editor.checkedUpdate(List(Document.Node.Edits(rawEdits)))
           })
         })
 

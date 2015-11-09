@@ -1,6 +1,8 @@
 package dk.itu.turbocharger.java.ui
 
-import dk.itu.coqoon.ui.CoqGoalsContainer
+import dk.itu.coqoon.ui.{
+  CoqGoalsContainer, CoqoonUIPreferences, ManifestIdentifiers}
+import dk.itu.coqoon.ui.pide.{Perspective, PIDESessionHost}
 import dk.itu.turbocharger.java.{Partitioning, DecoratedJavaPartitioner}
 
 import org.eclipse.ui.editors.text.{
@@ -8,69 +10,68 @@ import org.eclipse.ui.editors.text.{
 import org.eclipse.core.filebuffers.IDocumentSetupParticipant
 
 class DecoratedJavaEditor
-    extends TextEditor with CoqGoalsContainer {
+    extends TextEditor with CoqGoalsContainer with PIDESessionHost {
   protected def createSourceViewerConfiguration() =
     new DecoratedJavaEditorSourceViewerConfiguration(this)
 
-  private[ui] val session = new dk.itu.coqoon.ui.pide.SessionManager
-  session.start
+  import dk.itu.coqoon.core.utilities.TryCast
+  import org.eclipse.jface.text.source.AnnotationModel
+  protected def getAnnotationModel() = Option(getDocumentProvider).flatMap(
+      p => Option(p.getAnnotationModel(getEditorInput)).flatMap(
+          TryCast[AnnotationModel]))
+
+  override protected def dispose() = {
+    session.stop
+    super.dispose
+  }
+
+  def getViewer = super.getSourceViewer
 
   import dk.itu.coqoon.ui.utilities.UIUtils.asyncExec
   import dk.itu.coqoon.core.utilities.TryCast
   import org.eclipse.ui.IFileEditorInput
   import org.eclipse.core.resources.IFile
-  import isabelle.{Command, Session, Document}
+  import isabelle.{Text, Command, Session, Document}
   /* XXX: copied-and-pasted from PIDECoqEditor... */
   protected[ui] def getFile() : Option[IFile] =
     TryCast[IFileEditorInput](getEditorInput).map(_.getFile)
   /* ... apart from the trailing ".v", required by Coq */
-  protected[ui] def getNodeName() =
+  override protected[ui] def getNodeName() =
     getFile.map(file => Document.Node.Name(file.getName + ".v"))
 
   /* XXX: exposing this lock to the reconciler can't possibly be a good idea */
-  private[ui] object CommandsLock
+  override protected[ui] def executeWithCommandsLock[A](f : => A) =
+    super.executeWithCommandsLock(f)
+
   import dk.itu.turbocharger.coq.CoqCommand
   import dk.itu.turbocharger.parsing.DecoratedDocument
   /* Seq((position in the generated PIDE document, Option[(Coq command, region
    * in the complete document corresponding to the Coq command)])) */
   private[ui] var pideDocument :
       Seq[(Int, (CoqCommand, Option[DecoratedDocument.Region]))] = Seq()
-  private var lastSnapshot : Option[Document.Snapshot] = None
   private[ui] var commands : Seq[(Int, Command)] = Seq()
 
-  private def commandsUpdated(changed : Seq[Command]) =
-    asyncExec {
-      import dk.itu.coqoon.ui.pide.Responses
-      val changedResultsAndMarkup =
-        (CommandsLock synchronized {
-          val ls = lastSnapshot.get
-          for (c <- changed)
-            yield (ls.node.command_start(c), c,
-                      Responses.extractResults(ls, c),
-                      Responses.extractMarkup(ls, c))
-        })
-      println(changedResultsAndMarkup)
+  import org.eclipse.jface.text.source.Annotation
+  private var annotations : Map[Command, Annotation] = Map()
+
+  override protected def commandsUpdated(changed : Seq[Command]) =
+    println(s"$this.commandsUpdated($changed)")
+  override protected def generateInitialEdits() = List()
+  override protected def getPerspective() = {
+    val overlay = getOverlay match {
+      case Some((o, _)) => o.wrap
+      case _ => Document.Node.Overlays.empty
     }
-
-  session.addInitialiser(session =>
-    session.commands_changed += Session.Consumer[Any]("Coqoon") {
-      case changed : Session.Commands_Changed =>
-        CommandsLock synchronized {
-          lastSnapshot = getNodeName.map(n => session.snapshot(n))
-          lastSnapshot.foreach(snapshot =>
-            commands =
-              (for (command <- snapshot.node.commands;
-                    offset <- snapshot.node.command_start(command))
-                yield (offset, command)).toSeq)
-        }
-        commandsUpdated(changed.commands.toSeq)
-      case _ =>
-    })
-
-  override protected def dispose() = {
-    session.stop
-    super.dispose
+    Perspective.makeFull(overlay)
   }
+
+  def extractRealOffset(generatedOffset : Int) =
+    pideDocument.collectFirst {
+      case (offset, (_,
+          Some(DecoratedDocument.Region(start, length))))
+          if offset == generatedOffset =>
+        start
+    }
 
   private val reconciler = new DecoratedJavaReconciler(this)
 
