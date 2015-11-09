@@ -47,11 +47,11 @@ class DecoratedJavaReconciler(
         pideDoc.right.foreach(doc => {
           val rawEdits = differ.makeEdits(doc.map(_._1.toString.trim + "\n").toList)
           editor.getNodeName.foreach(nodeName => {
-            import dk.itu.coqoon.ui.pide.Perspective.makeFullPerspective
+            import dk.itu.coqoon.ui.pide.Perspective
             import isabelle.Document
             val edits : List[Document.Edit_Text] =
               List(nodeName -> Document.Node.Edits(rawEdits),
-                   nodeName -> makeFullPerspective())
+                   nodeName -> Perspective.makeFull())
             println(edits)
             editor.session.executeWithSessionLock(
                 _.update(Document.Blobs.empty, edits, "coq"))
