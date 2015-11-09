@@ -31,8 +31,10 @@ class DecoratedJavaEditor
   private[ui] object CommandsLock
   import dk.itu.turbocharger.coq.CoqCommand
   import dk.itu.turbocharger.parsing.DecoratedDocument
+  /* Seq((position in the generated PIDE document, Option[(Coq command, region
+   * in the complete document corresponding to the Coq command)])) */
   private[ui] var pideDocument :
-      Seq[(CoqCommand, Option[DecoratedDocument.Region])] = Seq()
+      Seq[(Int, (CoqCommand, Option[DecoratedDocument.Region]))] = Seq()
   private var lastSnapshot : Option[Document.Snapshot] = None
   private[ui] var commands : Seq[(Int, Command)] = Seq()
 

@@ -40,7 +40,13 @@ class DecoratedJavaReconciler(
               Left(e)
           }
         editor.CommandsLock synchronized {
-          editor.pideDocument = pideDoc.right.toOption.getOrElse(Seq())
+          import dk.itu.turbocharger.coq.CoqCommand
+          val d = pideDoc.right.toOption.getOrElse(Seq())
+          /* Before you ask, the + 1 is for the line separator that appears in
+           * the generated PIDE document. Yes, I hate it too */
+          editor.pideDocument =
+            DecoratedDocument.withPositions[(CoqCommand, Option[Region])](
+                _._1.toString.length + 1)(0, d.toStream)
         }
         val syntheticMessages = pideDoc.left.toOption.map(e => new Message(
             e.message, e.node.getStartPosition, e.node.getLength)).toSeq
