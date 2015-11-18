@@ -72,8 +72,7 @@ object ProofExtraction {
               try {
                 if (kind != Command_Span.Ignored_Span) {
                   Some(ArbitrarySentence(c.toString),
-                      Map(Region(0, length = c.length) ->
-                              Region(start + pos, length = c.length)))
+                      Map(Region(0, length = c.length) -> (start + pos)))
                 } else None
               } finally pos += c.length
             }).flatten
@@ -91,9 +90,9 @@ object ProofExtraction {
               "triple",
               pre.getOrElse(ArbitraryTerm("False")),
               IdentifierTerm(s"${definitionId}_body"),
-              post.getOrElse(ArbitraryTerm("False"))))), Map.empty[Region, Region])) +:
-          ((Theorem.Proof, Map.empty[Region, Region]) +: sentences :+
-           (Theorem.Qed, Map.empty[Region, Region]))
+              post.getOrElse(ArbitraryTerm("False"))))), Map.empty[Region, Int])) +:
+          ((Theorem.Proof, Map.empty[Region, Int]) +: sentences :+
+           (Theorem.Qed, Map.empty[Region, Int]))
     } else Seq()
   }
 }

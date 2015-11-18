@@ -49,7 +49,7 @@ class DecoratedJavaEditor
   /* Seq((position in the generated PIDE document, Option[(Coq command, region
    * in the complete document corresponding to the Coq command)])) */
   private[ui] var pideDocument :
-      Seq[(Int, (CoqCommand, Map[Region, Region]))] = Seq()
+      Seq[(Int, (CoqCommand, Map[Region, Int]))] = Seq()
   private[ui] var commands : Seq[(Int, Command)] = Seq()
 
   import org.eclipse.jface.text.source.Annotation
