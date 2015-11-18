@@ -38,13 +38,14 @@ object DecoratedJavaCoqDocument {
   /* Returns a sequence of commands and, if appropriate, the document regions
    * they're derived from. */
   def generateCompletePIDEDocument(doc : DecoratedJavaDocument) :
-      Seq[(CoqCommand, Option[Region])] = {
+      Seq[(CoqCommand, Map[Region, Region])] = {
     val decls = children[TypeDeclaration](doc.getCompilationUnit)
 
     val loadPath =
       Option(ICoqModel.toCoqProject(doc.file.getProject)).toSeq.flatMap(
           p => p.getLoadPath.flatMap(lpe =>
-            lpe.asCommands.map(c => (ArbitrarySentence(c), None))))
+            lpe.asCommands.map(
+                c => (ArbitrarySentence(c), Map.empty[Region, Region]))))
     val init = decls.headOption.toSeq.flatMap(firstClass => {
       val coqView = doc.getCoqView
       val javaView = doc.getJavaView
@@ -74,7 +75,8 @@ object DecoratedJavaCoqDocument {
               try {
                 if (kind != Command_Span.Ignored_Span) {
                   Some(ArbitrarySentence(c.toString),
-                      Some(Region(start + pos, length = c.length)))
+                      Map(Region(0, length = c.length) ->
+                              Region(start + pos, length = c.length)))
                 } else None
               } finally pos += c.length
             }).flatten
@@ -82,12 +84,12 @@ object DecoratedJavaCoqDocument {
     })
 
     loadPath ++ init ++ decls.flatMap(t =>
-      generateDefinitionsForType(t).map((_, None)) ++
+      generateDefinitionsForType(t).map((_, Map.empty[Region, Region])) ++
         extractMethodProofs(doc, t))
   }
 
   def extractMethodProofs(doc : DecoratedJavaDocument,
-      t : TypeDeclaration) : Seq[(CoqCommand, Option[Region])] = {
+      t : TypeDeclaration) : Seq[(CoqCommand, Map[Region, Region])] = {
     val coqView = doc.getCoqView
     val javaView = doc.getJavaView
 

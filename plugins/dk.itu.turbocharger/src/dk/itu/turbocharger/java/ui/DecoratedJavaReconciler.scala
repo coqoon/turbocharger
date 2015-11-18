@@ -45,7 +45,7 @@ class DecoratedJavaReconciler(
           /* Before you ask, the + 1 is for the line separator that appears in
            * the generated PIDE document. Yes, I hate it too */
           editor.pideDocument =
-            DecoratedDocument.withPositions[(CoqCommand, Option[Region])](
+            DecoratedDocument.withPositions[(CoqCommand, Map[Region, Region])](
                 _._1.toString.length + 1)(0, d.toStream)
         }
         val syntheticMessages = pideDoc.left.toOption.map(e => new Message(

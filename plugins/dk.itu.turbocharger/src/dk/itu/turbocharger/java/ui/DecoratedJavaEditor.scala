@@ -45,10 +45,11 @@ class DecoratedJavaEditor
 
   import dk.itu.turbocharger.coq.CoqCommand
   import dk.itu.turbocharger.parsing.DecoratedDocument
+  import dk.itu.turbocharger.parsing.DecoratedDocument.Region
   /* Seq((position in the generated PIDE document, Option[(Coq command, region
    * in the complete document corresponding to the Coq command)])) */
   private[ui] var pideDocument :
-      Seq[(Int, (CoqCommand, Option[DecoratedDocument.Region]))] = Seq()
+      Seq[(Int, (CoqCommand, Map[Region, Region]))] = Seq()
   private[ui] var commands : Seq[(Int, Command)] = Seq()
 
   import org.eclipse.jface.text.source.Annotation
@@ -64,14 +65,6 @@ class DecoratedJavaEditor
     }
     Perspective.makeFull(overlay)
   }
-
-  def extractRealOffset(generatedOffset : Int) =
-    pideDocument.collectFirst {
-      case (offset, (_,
-          Some(DecoratedDocument.Region(start, length))))
-          if offset == generatedOffset =>
-        start
-    }
 
   private val reconciler = new DecoratedJavaReconciler(this)
 

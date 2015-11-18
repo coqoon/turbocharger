@@ -66,7 +66,8 @@ object ProofExtraction {
             yield {
               try {
                 (ArbitrarySentence(c.toString),
-                    Some(Region(start + pos, length = c.length)))
+                    Map(Region(0, length = c.length) ->
+                            Region(start + pos, length = c.length)))
               } finally pos += c.length
             }
         }
@@ -83,8 +84,9 @@ object ProofExtraction {
               "triple",
               pre.getOrElse(ArbitraryTerm("False")),
               IdentifierTerm(s"${definitionId}_body"),
-              post.getOrElse(ArbitraryTerm("False"))))), None)) +:
-          ((Theorem.Proof, None) +: sentences :+ (Theorem.Qed, None))
+              post.getOrElse(ArbitraryTerm("False"))))), Map.empty[Region, Region])) +:
+          ((Theorem.Proof, Map.empty[Region, Region]) +: sentences :+
+           (Theorem.Qed, Map.empty[Region, Region]))
     } else Seq()
   }
 }
