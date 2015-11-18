@@ -57,20 +57,27 @@ object ProofExtraction {
             Seq()
         }
 
+      import dk.itu.coqoon.core.utilities.Substring
+      import isabelle.Command_Span
       val sentences = pt flatMap {
         case (start, (token, content)) =>
           /* Strip the leading and trailing antiquote bits from this token
            * and extract all the sentences that it contains */
           var pos = 2
-          for ((c, s) <- getNextSentences(content, 2, content.length - 2))
+          import dk.itu.turbocharger.coq.CommonSyntax.parse_spans
+          val spans = parse_spans(Substring(content, 2, content.length - 2))
+          (for (Command_Span.Span(kind, body) <- spans)
             yield {
+              val c = body.map(_.content).mkString
               try {
-                (ArbitrarySentence(c.toString),
-                    Map(Region(0, length = c.length) ->
-                            Region(start + pos, length = c.length)))
+                if (kind != Command_Span.Ignored_Span) {
+                  Some(ArbitrarySentence(c.toString),
+                      Map(Region(0, length = c.length) ->
+                              Region(start + pos, length = c.length)))
+                } else None
               } finally pos += c.length
-            }
-        }
+            }).flatten
+      }
       /* XXX: copy-and-paste from
        * DecoratedJavaDocument.generateDefinitionsForType */
       val b = method.resolveBinding

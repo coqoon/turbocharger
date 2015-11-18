@@ -68,6 +68,7 @@ object DecoratedJavaCoqDocument {
           /* Strip the leading and trailing antiquote bits from this token
            * and extract all the sentences that it contains */
           var pos = 2
+          import dk.itu.turbocharger.coq.CommonSyntax.parse_spans
           val spans = parse_spans(Substring(content, 2, content.length - 2))
           (for (Command_Span.Span(kind, body) <- spans)
             yield {
@@ -177,9 +178,6 @@ object DecoratedJavaCoqDocument {
                 methods.map(m =>
                   TupleTerm(m._1, IdentifierTerm(m._3.name))).toList)))
   }
-
-  private val syntax = new isabelle.Coq_Syntax
-  def parse_spans(input : CharSequence) = syntax.parse_spans(input)
 }
 
 class InfoVisitor extends ASTVisitor {
