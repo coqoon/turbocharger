@@ -60,19 +60,24 @@ object DecoratedJavaCoqDocument {
           case _ =>
             Seq()
         }
-      import dk.itu.coqoon.core.coqtop.CoqSentence.getNextSentences
+      import dk.itu.coqoon.core.utilities.Substring
+      import isabelle.Command_Span
       pt flatMap {
         case (start, (token, content)) =>
           /* Strip the leading and trailing antiquote bits from this token
            * and extract all the sentences that it contains */
           var pos = 2
-          for ((c, s) <- getNextSentences(content, 2, content.length - 2))
+          val spans = parse_spans(Substring(content, 2, content.length - 2))
+          (for (Command_Span.Span(kind, body) <- spans)
             yield {
+              val c = body.map(_.content).mkString
               try {
-                (ArbitrarySentence(c.toString),
-                    Some(Region(start + pos, length = c.length)))
+                if (kind != Command_Span.Ignored_Span) {
+                  Some(ArbitrarySentence(c.toString),
+                      Some(Region(start + pos, length = c.length)))
+                } else None
               } finally pos += c.length
-            }
+            }).flatten
       }
     })
 
@@ -90,7 +95,6 @@ object DecoratedJavaCoqDocument {
     import org.eclipse.jdt.core.dom.MethodDeclaration
     val proofs =
       for (method <- children[MethodDeclaration](t)) yield {
-        import dk.itu.coqoon.core.coqtop.CoqSentence.getNextSentences
         import org.eclipse.jdt.core.dom.IMethodBinding
         println(method.resolveBinding)
 
@@ -171,6 +175,9 @@ object DecoratedJavaCoqDocument {
                 methods.map(m =>
                   TupleTerm(m._1, IdentifierTerm(m._3.name))).toList)))
   }
+
+  private val syntax = new isabelle.Coq_Syntax
+  def parse_spans(input : CharSequence) = syntax.parse_spans(input)
 }
 
 class InfoVisitor extends ASTVisitor {
