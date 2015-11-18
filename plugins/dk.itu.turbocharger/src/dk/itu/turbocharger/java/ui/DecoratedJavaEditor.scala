@@ -103,4 +103,6 @@ class DecoratedJavaEditor
     setSourceViewerConfiguration(createSourceViewerConfiguration)
     super.initializeEditor
   }
+
+  override def findCommand(offset : Int) = None
 }
