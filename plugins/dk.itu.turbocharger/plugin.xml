@@ -27,8 +27,8 @@
       </editor>
    </extension>
    <extension
-         id="kdj_error"
-         name="dj error"
+         id="dk.itu.coqoon.turbocharger:marker:java"
+         name="Java problem"
          point="org.eclipse.core.resources.markers">
       <persistent
             value="true">

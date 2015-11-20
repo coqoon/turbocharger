@@ -1,6 +1,6 @@
 package dk.itu.turbocharger.java.ui
 
-import dk.itu.coqoon.core.ManifestIdentifiers.MARKER_PROBLEM
+import dk.itu.turbocharger.ManifestIdentifiers.Markers.JAVA_PROBLEM
 import dk.itu.coqoon.ui.EventReconciler
 import dk.itu.turbocharger.java.DecoratedJavaDocument
 import dk.itu.turbocharger.parsing.DecoratedDocument
@@ -63,7 +63,7 @@ class DecoratedJavaReconciler(
           import org.eclipse.core.resources.{IMarker, IResource}
           val file = TryCast[FileEditorInput](editor.getEditorInput)
           file.foreach(_.getFile.deleteMarkers(
-              MARKER_PROBLEM, false, IResource.DEPTH_ZERO))
+              JAVA_PROBLEM, false, IResource.DEPTH_ZERO))
           (cu.getMessages ++ syntheticMessages).foreach(
               m => spreadError(
                   f.getFile, m.getMessage,
@@ -85,7 +85,7 @@ object DecoratedJavaReconciler {
       s : String, r : Region, v : DecoratedDocument#TypedView) = {
     for (r @ Region(start, length) <- v.toDocumentRegions(r)) yield {
       import scala.collection.JavaConversions._
-      val mark = f.createMarker(MARKER_PROBLEM)
+      val mark = f.createMarker(JAVA_PROBLEM)
       println("Created marker " + mark)
       mark.setAttributes(Map(
           (IMarker.MESSAGE, s),
