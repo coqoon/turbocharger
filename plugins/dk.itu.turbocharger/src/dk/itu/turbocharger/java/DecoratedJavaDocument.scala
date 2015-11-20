@@ -35,6 +35,21 @@ object DecoratedJavaCoqDocument {
   import dk.itu.turbocharger.coq.Charge._
   import org.eclipse.jdt.core.dom.TypeDeclaration
 
+  def simplify(f : Seq[(Int, DecoratedDocument.Token)]) :
+      Seq[(Int, DecoratedDocument.Token)] = {
+    import Partitioning.Coq.ContentTypes.COQ
+    f match {
+      case (l1 @ (s, (k, c1))) +:
+           (l2 @ (_, (l, c2))) +: tail
+          if k.label.startsWith(COQ) && l.label.startsWith(COQ) =>
+        simplify((s, (k, c1 + c2)) +: tail)
+      case l1 +: tail =>
+        l1 +: simplify(tail)
+      case tail =>
+        tail
+    }
+  }
+
   /* Returns a sequence of commands and, if appropriate, the document regions
    * they're derived from. */
   def generateCompletePIDEDocument(doc : DecoratedJavaDocument) :
@@ -54,13 +69,13 @@ object DecoratedJavaCoqDocument {
       /* XXX: This is literally copied-and-pasted from
        * ProofExtraction.extractProof. Surely we can do better? */
       val pt =
-        doc.getPartialTokens(Region(0, length = initEnd)) match {
+        simplify(doc.getPartialTokens(Region(0, length = initEnd)) match {
           case Some((start, tokens)) =>
             DecoratedDocument.withPositions(
                 start, tokens).filter(t => coqView.contains(t._2))
           case _ =>
             Seq()
-        }
+        })
       import dk.itu.coqoon.core.utilities.Substring
       import isabelle.Command_Span
       pt flatMap {
