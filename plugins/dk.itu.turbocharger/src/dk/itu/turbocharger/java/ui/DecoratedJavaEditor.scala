@@ -57,7 +57,27 @@ class DecoratedJavaEditor
 
   override protected def commandsUpdated(changed : Seq[Command]) =
     println(s"$this.commandsUpdated($changed)")
-  override protected def generateInitialEdits() = List()
+  import dk.itu.coqoon.ui.utilities.UIUtils.exec
+  import dk.itu.coqoon.core.utilities.TotalReader
+  override protected def generateInitialEdits() = exec {
+    val fi = TryCast[IFileEditorInput](getEditorInput)
+    (fi, partitioner) match {
+      case (Some(f), Some(p)) =>
+        differ.makeEdits(List())
+        import dk.itu.turbocharger.java.{
+          DecoratedJavaDocument, DecoratedJavaCoqDocument}
+        val doc = new DecoratedJavaDocument(f.getFile, p.getTokens)
+        val pdoc = DecoratedJavaCoqDocument.generateCompletePIDEDocument(doc)
+        val text = pdoc.map(_._1.toString.trim + "\n").toList
+        List[Document.Node.Edit[Text.Edit, Text.Perspective]](
+            Document.Node.Clear(),
+            Document.Node.Edits(differ.makeEdits(text)),
+            getPerspective)
+      case _ =>
+        List()
+    }
+  }
+
   override protected def getPerspective() = {
     val overlay = getOverlay match {
       case Some((o, _)) => o.wrap
