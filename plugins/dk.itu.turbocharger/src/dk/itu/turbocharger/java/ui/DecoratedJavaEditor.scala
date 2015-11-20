@@ -31,7 +31,20 @@ class DecoratedJavaEditor
   import dk.itu.coqoon.core.utilities.TryCast
   import org.eclipse.ui.IFileEditorInput
   import org.eclipse.core.resources.IFile
-  import isabelle.{Text, Command, Session, Document}
+
+  import isabelle.{Text, Command, Session, Protocol, Document}
+
+  import dk.itu.coqoon.ui.utilities.SupersedableTask
+  val uiMoveTask = new SupersedableTask(200)
+
+  import org.eclipse.swt.custom.{CaretEvent, CaretListener}
+  object DocumentCaretListener extends CaretListener {
+    override def caretMoved(ev : CaretEvent) =
+      uiMoveTask schedule {
+        caretPing
+      }
+  }
+
   /* XXX: copied-and-pasted from PIDECoqEditor... */
   protected[ui] def getFile() : Option[IFile] =
     TryCast[IFileEditorInput](getEditorInput).map(_.getFile)
@@ -51,6 +64,50 @@ class DecoratedJavaEditor
   private[ui] var pideDocument :
       Seq[(Int, (CoqCommand, Map[Region, Int]))] = Seq()
   private[ui] var commands : Seq[(Int, Command)] = Seq()
+
+  private var lastCommand : Option[Command] = None
+
+  import dk.itu.coqoon.ui.pide.Responses
+  import dk.itu.coqoon.ui.utilities.UIUtils.asyncExec
+  private def caretPing() =
+    asyncExec {
+      val caret = Option(getViewer).map(_.getTextWidget).filter(
+          text => !text.isDisposed).map(_.getCaretOffset)
+      val commandResultsAndMarkup = caret.flatMap(caret =>
+        executeWithCommandsLock {
+          val c = findCommand(caret)
+          lastSnapshot.flatMap(snapshot => c.map(
+              c => (c,
+                  Responses.extractResults(snapshot, c._2),
+                  Responses.extractMarkup(snapshot, c._2))))
+        })
+      commandResultsAndMarkup match {
+        case Some(((offset, command), results, markup)) =>
+          val sameCommand = lastCommand.contains(command)
+
+          markup.find(_._2.name == "goals") match {
+            case Some((_, el))
+                if !sameCommand || goals == None =>
+              setGoals(Responses.extractGoals(el))
+            case Some(el) => /* do nothing? */
+            case None => setGoals(None)
+          }
+
+          if (!sameCommand) {
+            import dk.itu.coqoon.ui.utilities.EclipseConsole
+            for ((_, tree) <- results) {
+              Responses.extractWritelnMessage(tree).foreach(message =>
+                  EclipseConsole.out.println(message))
+              Responses.extractError(tree).foreach(error =>
+                  EclipseConsole.err.println(error._2))
+            }
+            lastCommand = Option(command)
+          }
+        case _ =>
+          setGoals(None)
+          lastCommand = None
+      }
+    }
 
   import org.eclipse.jface.text.source.Annotation
   private var annotations : Map[Command, Annotation] = Map()
@@ -94,6 +151,7 @@ class DecoratedJavaEditor
       parent : Composite, ruler : IVerticalRuler, styles : Int) = {
     val viewer = super.createSourceViewer(parent, ruler, styles)
     reconciler.install(viewer)
+    viewer.getTextWidget.addCaretListener(DocumentCaretListener)
     viewer
   }
 
