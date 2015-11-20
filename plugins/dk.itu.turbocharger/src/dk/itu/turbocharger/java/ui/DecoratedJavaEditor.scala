@@ -79,6 +79,9 @@ class DecoratedJavaEditor
 
   protected[ui] var partitioner : Option[DecoratedJavaPartitioner] = None
 
+  import dk.itu.turbocharger.coq.PIDEDiff
+  private[ui] lazy val differ = new PIDEDiff
+
   private object DecoratedJavaDocumentSetupParticipant
       extends IDocumentSetupParticipant {
     import org.eclipse.jface.text.IDocument

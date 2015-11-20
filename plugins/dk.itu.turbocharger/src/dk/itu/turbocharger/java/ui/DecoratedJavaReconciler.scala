@@ -15,9 +15,6 @@ class DecoratedJavaReconciler(
   import org.eclipse.jdt.core.JavaCore
   import org.eclipse.jdt.core.dom.{AST, Message, ASTParser}
 
-  import dk.itu.turbocharger.coq.PIDEDiff
-  private lazy val differ = new PIDEDiff
-
   import EventReconciler.DecoratedEvent
   import DecoratedDocument.Region
   override def reconcile(events : List[DecoratedEvent]) = {
@@ -51,8 +48,8 @@ class DecoratedJavaReconciler(
         val syntheticMessages = pideDoc.left.toOption.map(e => new Message(
             e.message, e.node.getStartPosition, e.node.getLength)).toSeq
         pideDoc.right.foreach(doc => {
-          println(s"""***\n${doc.mkString("\n")}""")
-          val rawEdits = differ.makeEdits(doc.map(_._1.toString.trim + "\n").toList)
+          val rawEdits = editor.differ.makeEdits(
+              doc.map(_._1.toString.trim + "\n").toList)
           editor.getNodeName.foreach(nodeName => {
             import isabelle.Document
             editor.checkedUpdate(List(Document.Node.Edits(rawEdits)))
