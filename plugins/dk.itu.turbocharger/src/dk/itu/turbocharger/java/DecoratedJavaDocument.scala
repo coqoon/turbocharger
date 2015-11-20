@@ -87,7 +87,7 @@ object DecoratedJavaCoqDocument {
           val spans = parse_spans(Substring(content, 2, content.length - 2))
           (for (Command_Span.Span(kind, body) <- spans)
             yield {
-              val c = body.map(_.content).mkString
+              val c = body.map(_.source).mkString
               try {
                 if (kind != Command_Span.Ignored_Span) {
                   Some(ArbitrarySentence(c.toString),
