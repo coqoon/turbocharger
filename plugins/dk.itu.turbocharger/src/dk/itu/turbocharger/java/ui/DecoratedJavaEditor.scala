@@ -120,5 +120,11 @@ class DecoratedJavaEditor
     super.initializeEditor
   }
 
-  override def findCommand(offset : Int) = None
+  override def findCommand(offset : Int) : Option[(Int, Command)] = {
+    for ((docOffset, (command, regions)) <- pideDocument) {
+      for ((cr, po) <- regions if cr.translate(po).contains(offset))
+        return commands.find(_._1 == docOffset)
+    }
+    None
+  }
 }
