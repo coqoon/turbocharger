@@ -95,6 +95,7 @@ object DecoratedDocument {
     override def getLength() = length
     override def getOffset() = start
 
+    def translate(offset : Int) = Region(start + offset, length = length)
     /* Returns the smallest Region containing both this region and @r. */
     def union(r : Region) = {
       val newStart = Math.min(start, r.start)
@@ -111,7 +112,10 @@ object DecoratedDocument {
         val newLength = Math.min(end, r.end) - newStart
         Some(Region(newStart, length = newLength))
       }
+    def contains(p : Int) = (p >= start && p < end)
     def contains(r : Region) = (union(r) == this)
+
+    def makePosition() = new org.eclipse.jface.text.Position(start, length)
   }
   trait View {
     def get() : String = getTokens.flatMap(_._2).mkString
