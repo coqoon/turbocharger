@@ -110,10 +110,132 @@ class DecoratedJavaEditor
     }
 
   import org.eclipse.jface.text.source.Annotation
-  private var annotations : Map[Command, Annotation] = Map()
+  private var annotations : Map[Command, Seq[Annotation]] = Map()
 
-  override protected def commandsUpdated(changed : Seq[Command]) =
-    println(s"$this.commandsUpdated($changed)")
+  override protected def commandsUpdated(changed : Seq[Command]) = {
+    import dk.itu.coqoon.ui.pide.Responses
+    val changedResultsAndMarkup =
+      (executeWithCommandsLock {
+        val ls = lastSnapshot.get
+        lastSnapshot.foreach(snapshot =>
+            commands =
+              (for (command <- snapshot.node.commands;
+                    offset <- snapshot.node.command_start(command))
+                yield (offset, command)).toSeq)
+        for (c <- changed)
+          yield {
+            (ls.node.command_start(c), c,
+                Responses.extractResults(ls, c),
+                Responses.extractMarkup(ls, c))
+          }
+      })
+
+    asyncExec {
+      val am =
+        if (CoqoonUIPreferences.ProcessingAnnotations.get) {
+          getAnnotationModel
+        } else None
+      am.foreach(
+          model => Option(getViewer).map(_.getDocument).foreach(model.connect))
+
+      import org.eclipse.jface.text.Position
+      var toDelete : Seq[(Command, Seq[Annotation])] = Seq()
+      var annotationsToAdd : Seq[(Command, Seq[(Annotation, Position)])] = Seq()
+      var errorsToAdd : Seq[(Command, (Int, Int), String)] = Seq()
+      var errorsToDelete : Seq[Command] = Seq()
+
+      try {
+        for (i <- changedResultsAndMarkup) i match {
+          case (Some(offset), command, results, markup) =>
+            val posMap = (pideDocument.find(_._1 == offset) map {
+              case (_, (_, map)) => map
+            })
+            val complete =
+              !(Protocol.Status.make(
+                  markup.map(_._2.markup).iterator).is_running)
+
+            /* Extract and display error messages */
+            var commandHasErrors = false
+            for ((_, tree) <- results) {
+              (getFile, Responses.extractError(tree), posMap) match {
+                case (Some(f), Some((id, msg, Some(start), Some(end))),
+                      Some(map)) =>
+                  val r = Region(start - 1, length = (end - start))
+                  for ((region, po) <- map;
+                       f <- region.intersection(r).map(_.translate(po)))
+                    errorsToAdd :+= (command, (f.start, f.end), msg)
+                  commandHasErrors = true
+                case (Some(f), Some((id, msg, _, _)), Some(map)) =>
+                  for ((region, po) <- map;
+                       f = region.translate(po))
+                    errorsToAdd :+= (command, (f.start, f.end), msg)
+                  commandHasErrors = true
+                case _ =>
+              }
+            }
+            if (!commandHasErrors)
+              errorsToDelete :+= command
+
+            val old = annotations.get(command).toSeq.flatten
+            val makeNew = !complete
+
+            if (!old.isEmpty)
+              toDelete :+= (command, old)
+            (makeNew, posMap) match {
+              case (true, Some(map)) =>
+                annotationsToAdd :+= (command, map.toSeq map {
+                  case (r, offset) =>
+                    (new Annotation(
+                         ManifestIdentifiers.Annotations.PROCESSING,
+                         false, "Processing proof"),
+                     r.translate(offset).makePosition)
+                })
+              case _ =>
+            }
+          case (None, command, _, _) =>
+            /* This command has been removed from the document; delete its
+             * annotation, along with any errors it might have */
+            toDelete :+= (command, annotations.get(command).toSeq.flatten)
+        }
+      } finally {
+        am.foreach(model => {
+          import scala.collection.JavaConversions._
+          val del =
+            (for ((command, ans) <- toDelete)
+              yield {
+                annotations -= command
+                ans
+              }).flatten
+          val add =
+            (for ((command, ans) <- annotationsToAdd)
+              yield {
+                annotations += (command -> ans.map(_._1))
+                ans
+              }).flatten.toMap
+          model.replaceAnnotations(del.toArray, add)
+
+          model.disconnect(getViewer.getDocument)
+          getSourceViewer.invalidateTextPresentation
+        })
+
+        if (!toDelete.isEmpty || !errorsToAdd.isEmpty ||
+            !errorsToDelete.isEmpty)
+          getFile.foreach(file =>
+            new dk.itu.coqoon.ui.pide.UpdateErrorsJob(file,
+                commands,
+                toDelete.map(_._1) ++ errorsToDelete,
+                errorsToAdd).schedule)
+      }
+
+      lastCommand match {
+        case None =>
+          caretPing
+        case Some(c) if changed.contains(c) =>
+          caretPing
+        case _ =>
+      }
+    }
+  }
   import dk.itu.coqoon.ui.utilities.UIUtils.exec
   import dk.itu.coqoon.core.utilities.TotalReader
   override protected def generateInitialEdits() = exec {
