@@ -6,8 +6,8 @@ import org.eclipse.jdt.core.dom.MethodDeclaration
 import DecoratedDocument.Region
 
 object ProofExtraction {
-  private final val Precondition = """^<%\s*precondition:""".r.unanchored
-  private final val Postcondition = """^<%\s*postcondition:""".r.unanchored
+  private final val Precondition = """^<%(\s+precondition:)(.*)%>$""".r.unanchored
+  private final val Postcondition = """^<%(\s+postcondition:)(.*)%>$""".r.unanchored
   /* @sr is the region in which to look for specifications, @pr the region for
    * proofs, @doc the document containing those regions, @langView the
    * language-specific view of that document, and @coqView the Coq-specific
@@ -30,16 +30,16 @@ object ProofExtraction {
            * interacts badly with comments, and is generally in need of being
            * replaced with something cleverer */
           val pre = tp.collectFirst {
-            case (o, (pt, a @ Precondition()))
+            case (o, (pt, a @ Precondition(leadin, body)))
                 if pt.label.startsWith(Partitioning.Coq.ContentTypes.COQ) =>
-              a.substring(2, a.length - 2).trim.stripPrefix("precondition:")
+              (body, o + 2 + leadin.length)
           }
           val post = tp.collectFirst {
-            case (o, (pt, a @ Postcondition()))
+            case (o, (pt, a @ Postcondition(leadin, body)))
                 if pt.label.startsWith(Partitioning.Coq.ContentTypes.COQ) =>
-              a.substring(2, a.length - 2).trim.stripPrefix("postcondition:")
+              (body, o + 2 + leadin.length)
           }
-          (pre.map(ArbitraryTerm), post.map(ArbitraryTerm))
+          (pre, post)
         case _ =>
           (None, None)
       }
@@ -83,14 +83,28 @@ object ProofExtraction {
       val definitionId =
         s"${b.getDeclaringClass.getName}_${b.getName}"
 
-      ((Theorem(s"${definitionId}_s", ConstructorInvocation2(
+      /* XXX: this is a terrible, ad-hoc way of finding the offsets for the
+       * pre- and postconditions */
+      val (preContent, postContent) =
+        (pre.map(_._1).getOrElse("True"),
+         post.map(_._1).getOrElse("True"))
+      val theorem =
+        Theorem(s"${definitionId}_s", ConstructorInvocation2(
           "lentails",
           IdentifierTerm("ltrue"),
           ConstructorInvocation3(
               "triple",
-              pre.getOrElse(ArbitraryTerm("False")),
+              ArbitraryTerm(preContent),
               IdentifierTerm(s"${definitionId}_body"),
-              post.getOrElse(ArbitraryTerm("False"))))), Map.empty[Region, Int])) +:
+              ArbitraryTerm(postContent))))
+      val positions = Seq(
+          pre.map(p =>
+            Region(theorem.toString.indexOf(preContent),
+                length = p._1.length) -> p._2),
+          post.map(p =>
+            Region(theorem.toString.indexOf(postContent),
+                length = p._1.length) -> p._2)).flatten
+      ((theorem, Map.empty[Region, Int] ++ positions)) +:
           ((Theorem.Proof, Map.empty[Region, Int]) +: sentences :+
            (Theorem.Qed, Map.empty[Region, Int]))
     } else Seq()
