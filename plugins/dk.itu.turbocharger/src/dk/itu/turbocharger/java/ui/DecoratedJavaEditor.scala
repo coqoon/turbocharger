@@ -162,13 +162,15 @@ class DecoratedJavaEditor
                       Some(map)) =>
                   val r = Region(start - 1, length = (end - start))
                   for ((region, po) <- map;
-                       f <- region.intersection(r).map(_.translate(po)))
-                    errorsToAdd :+= (command, (f.start, f.end), msg)
+                       f <- region.intersection(r);
+                       nr = f.translate(po - region.start)) {
+                    errorsToAdd :+= (command, (nr.start, nr.end), msg)
+                  }
                   commandHasErrors = true
                 case (Some(f), Some((id, msg, _, _)), Some(map)) =>
                   for ((region, po) <- map;
-                       f = region.translate(po))
-                    errorsToAdd :+= (command, (f.start, f.end), msg)
+                       nr = region.translate(po))
+                    errorsToAdd :+= (command, (nr.start, nr.end), msg)
                   commandHasErrors = true
                 case _ =>
               }
