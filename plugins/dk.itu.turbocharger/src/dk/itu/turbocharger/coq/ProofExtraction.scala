@@ -6,8 +6,10 @@ import org.eclipse.jdt.core.dom.MethodDeclaration
 import DecoratedDocument.Region
 
 object ProofExtraction {
-  private final val Precondition = """^(<%\s+precondition:)(.*)%>$""".r.unanchored
-  private final val Postcondition = """^(<%\s+postcondition:)(.*)%>$""".r.unanchored
+  private final val Precondition =
+    """(?s)^(<%\s+precondition:)(.*)%>$""".r.unanchored
+  private final val Postcondition =
+    """(?s)^(<%\s+postcondition:)(.*)%>$""".r.unanchored
   /* @sr is the region in which to look for specifications, @pr the region for
    * proofs, @doc the document containing those regions, @langView the
    * language-specific view of that document, and @coqView the Coq-specific
