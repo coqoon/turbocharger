@@ -62,24 +62,29 @@ object DecoratedJavaRecogniser extends PushdownAutomaton[Char] {
   nearlyOutOfJavaComment.BasicTransition('*', nearlyOutOfJavaComment)
   val tMLCommentToJava = nearlyOutOfJavaComment.BasicTransition('/', java)
 
-  /* XXX: nearlyCoq states don't support transitions to other Java/Coq ones */
   java.BasicTransition('<', nearlyCoq)
+  val tNCoqToString = nearlyCoq.BasicTransition('"', coqString)
+  val tNCoqToChar = nearlyCoq.BasicTransition('\'', javaChar)
+  nearlyCoq.BasicTransition('/', nearlyJavaComment)
   nearlyCoq.DefaultTransition(java)
   val tJavaToCoq = nearlyCoq.BasicTransition('%', coq)
 
   coq.BasicTransition('%', nearlyJava)
+  val tNJavaToString = nearlyJava.BasicTransition('"', coqString)
+  nearlyJava.BasicTransition('(', nearlyCoqComment)
   nearlyJava.DefaultTransition(coq)
   val tCoqToJava = nearlyJava.BasicTransition('>', java)
 
   coq.DefaultTransition(coq)
 
-  val tCoqToString = coq.BasicTransition('\"', coqString)
+  val tCoqToString = coq.BasicTransition('"', coqString)
   coqString.DefaultTransition(coqString)
   coqStringEscape.BasicTransition('\\', coqStringEscape)
   val tStringToCoq = coqString.BasicTransition('\"', coq)
   coqStringEscape.DefaultTransition(coqString)
 
   coq.BasicTransition('(', nearlyCoqComment)
+  val tNCCommentToString = nearlyCoqComment.BasicTransition('"', coqString)
   nearlyCoqComment.DefaultTransition(coq)
   nearlyCoqComment.BasicTransition('(', nearlyCoqComment)
   val tCoqToComment = nearlyCoqComment.BasicTransition('*', coqComment)
