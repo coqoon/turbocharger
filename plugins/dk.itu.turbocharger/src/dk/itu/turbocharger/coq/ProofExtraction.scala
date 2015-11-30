@@ -97,8 +97,8 @@ object ProofExtraction {
           ConstructorInvocation3(
               "triple",
               ArbitraryTerm(preContent),
-              IdentifierTerm(s"${definitionId}_body"),
-              ArbitraryTerm(postContent))))
+              ArbitraryTerm(postContent),
+              IdentifierTerm(s"${definitionId}_body"))))
       val positions = Seq(
           pre.map(p =>
             Region(theorem.toString.indexOf(preContent),
