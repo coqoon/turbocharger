@@ -21,31 +21,34 @@ object ProofExtraction {
       doc : DecoratedDocument,
       langView : DecoratedDocument#TypedView,
       coqView : DecoratedDocument#TypedView) = {
-    val (pre, post) =
+    import dk.itu.turbocharger.java.{Partitioning, DecoratedJavaCoqDocument}
+    import Partitioning.Coq.ContentTypes.COQ
+    val pt =
       doc.getPartialTokens(sr) match {
         case Some((start, tokens)) =>
-          import dk.itu.turbocharger.java.Partitioning
-
-          val tp = DecoratedDocument.withPositions(
-              start, tokens).filter(t => coqView.contains(t._2))
-          /* XXX: This extraction discards position information, probably
-           * interacts badly with comments, and is generally in need of being
-           * replaced with something cleverer */
-          val pre = tp.collectFirst {
-            case (o, (pt, a @ Precondition(leadin, body)))
-                if pt.label.startsWith(Partitioning.Coq.ContentTypes.COQ) =>
-              (body, o + leadin.length)
-          }
-          val post = tp.collectFirst {
-            case (o, (pt, a @ Postcondition(leadin, body)))
-                if pt.label.startsWith(Partitioning.Coq.ContentTypes.COQ) =>
-              (body, o + leadin.length)
-          }
-          (pre, post)
+          DecoratedJavaCoqDocument.simplify(
+              COQ, DecoratedDocument.withPositions(start, tokens))
         case _ =>
-          (None, None)
+          Seq()
       }
-    println(pre, post)
+    val (pre, post) = pt.filter(t => coqView.contains(t._2)) match {
+      case Seq() =>
+        (None, None)
+      case tokens =>
+        import dk.itu.turbocharger.java.Partitioning
+
+        val pre = tokens.collectFirst {
+          case (o, (pt, a @ Precondition(leadin, body)))
+              if pt.label.startsWith(Partitioning.Coq.ContentTypes.COQ) =>
+            (body, o + leadin.length)
+        }
+        val post = tokens.collectFirst {
+          case (o, (pt, a @ Postcondition(leadin, body)))
+              if pt.label.startsWith(Partitioning.Coq.ContentTypes.COQ) =>
+            (body, o + leadin.length)
+        }
+        (pre, post)
+    }
 
     if (!pre.isEmpty || !post.isEmpty) {
       /* This method has a precondition, postcondition, or both. Extract
