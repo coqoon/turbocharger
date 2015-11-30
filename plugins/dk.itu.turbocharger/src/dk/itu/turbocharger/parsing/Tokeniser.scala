@@ -43,8 +43,7 @@ class Tokeniser {
               interestingTransitions.get(t).foreach(t => {
                 val tokenContent = Substring(
                     input, lastTokenStart, position - t.leadin)
-                if (tokenContent.length > 0)
-                  nextToken = Some((lastTokenType, tokenContent.toString))
+                nextToken = Some((lastTokenType, tokenContent.toString))
                 lastTokenStart = Math.max(0, position - t.leadin)
                 lastTokenType = t.begins
               })
