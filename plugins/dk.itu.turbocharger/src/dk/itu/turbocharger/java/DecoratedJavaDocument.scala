@@ -35,16 +35,15 @@ object DecoratedJavaCoqDocument {
   import dk.itu.turbocharger.coq.Charge._
   import org.eclipse.jdt.core.dom.TypeDeclaration
 
-  def simplify(f : Seq[(Int, DecoratedDocument.Token)]) :
+  def simplify(prefix : String, f : Seq[(Int, DecoratedDocument.Token)]) :
       Seq[(Int, DecoratedDocument.Token)] = {
-    import Partitioning.Coq.ContentTypes.COQ
     f match {
       case (l1 @ (s, (k, c1))) +:
            (l2 @ (_, (l, c2))) +: tail
-          if k.label.startsWith(COQ) && l.label.startsWith(COQ) =>
-        simplify((s, (k, c1 + c2)) +: tail)
+          if k.label.startsWith(prefix) && l.label.startsWith(prefix) =>
+        simplify(prefix, (s, (k, c1 + c2)) +: tail)
       case l1 +: tail =>
-        l1 +: simplify(tail)
+        l1 +: simplify(prefix, tail)
       case tail =>
         tail
     }
@@ -68,8 +67,9 @@ object DecoratedJavaCoqDocument {
 
       /* XXX: This is literally copied-and-pasted from
        * ProofExtraction.extractProof. Surely we can do better? */
+      import Partitioning.Coq.ContentTypes.COQ
       val pt =
-        simplify(doc.getPartialTokens(Region(0, length = initEnd)) match {
+        simplify(COQ, doc.getPartialTokens(Region(0, length = initEnd)) match {
           case Some((start, tokens)) =>
             DecoratedDocument.withPositions(
                 start, tokens).filter(t => coqView.contains(t._2))
