@@ -43,7 +43,7 @@ class DecoratedJavaReconciler(
            * the generated PIDE document. Yes, I hate it too */
           editor.pideDocument =
             DecoratedDocument.withPositions[(CoqCommand, Map[Region, Int])](
-                _._1.toString.length + 1)(0, d.toStream)
+                _._1.toString.trim.length + 1)(0, d.toStream)
         }
         val syntheticMessages = pideDoc.left.toOption.map(e => new Message(
             e.message, e.node.getStartPosition, e.node.getLength)).toSeq
