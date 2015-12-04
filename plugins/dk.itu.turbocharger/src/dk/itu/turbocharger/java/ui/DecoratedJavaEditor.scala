@@ -304,7 +304,8 @@ class DecoratedJavaEditor
 
   override def findCommand(offset : Int) : Option[(Int, Command)] = {
     for ((docOffset, (command, regions)) <- pideDocument) {
-      for ((cr, po) <- regions if cr.translate(po).contains(offset))
+      for ((r, po) <- regions;
+           hr = r.move(po).extend(1) if hr.contains(offset))
         return commands.find(_._1 == docOffset)
     }
     None
