@@ -1,32 +1,35 @@
 package dk.itu.turbocharger.parsing
 
 class PushdownAutomaton[C] {
-  case class Element(label : String)
-  case class State(label : String) {
-    case class Transition(pop : Option[Element], input : Option[C],
-        push : Option[Element], to : State) {
-      def from() = State.this
-      addTransition(this)
-      override def toString =
-        s"(${from} ---[${pop.getOrElse("")}/${input.getOrElse("")}/${push.getOrElse("")}]--> ${to})"
+  import PushdownAutomaton.{State, Element}
+  type Transition = PushdownAutomaton.Transition[C]
+
+  protected object Actions {
+    object Transition {
+      def apply(from : State, pop : Option[Element],
+          input : Option[C], push : Option[Element], to : State) =
+        addTransition(
+            PushdownAutomaton.Transition(from, pop, input, push, to))
     }
     object BasicTransition {
-      def apply(input : C, to : State) =
-        Transition(None, Some(input), None, to)
+      def apply(from : State, input : C, to : State) =
+        Transition(from, None, Some(input), None, to)
     }
     object DefaultTransition {
-      def apply(to : State) = Transition(None, None, None, to)
+      def apply(from : State, to : State) =
+        Transition(from, None, None, None, to)
     }
   }
-  type Transition = State#Transition
 
   private var transitions :
       Map[State, Map[(Option[Element], Option[C]), Transition]] = Map()
 
   private def getTransitions(s : State) = transitions.getOrElse(s, Map())
-  private def addTransition(t : Transition) =
+  private def addTransition(t : Transition) = {
     transitions +=
       (t.from -> (getTransitions(t.from) + ((t.pop, t.input) -> t)))
+    t
+  }
 
   case class Execution(position : State, stack : Seq[Element]) {
     def accept(input : C) : Option[(Transition, Execution)] = {
@@ -42,5 +45,15 @@ class PushdownAutomaton[C] {
           None
       }
     }
+  }
+}
+object PushdownAutomaton {
+  case class Element(label : String)
+  case class State(label : String)
+
+  case class Transition[C](from : State, pop : Option[Element],
+      input : Option[C], push : Option[Element], to : State) {
+    override def toString =
+      s"(${from} ---[${pop.getOrElse("")}/${input.getOrElse("")}/${push.getOrElse("")}]--> ${to})"
   }
 }
