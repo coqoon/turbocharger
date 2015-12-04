@@ -169,7 +169,7 @@ class DecoratedJavaEditor
                   commandHasErrors = true
                 case (Some(f), Some((id, msg, _, _)), Some(map)) =>
                   for ((region, po) <- map;
-                       nr = region.translate(po))
+                       nr = region.move(po))
                     errorsToAdd :+= (command, (nr.start, nr.end), msg)
                   commandHasErrors = true
                 case _ =>
