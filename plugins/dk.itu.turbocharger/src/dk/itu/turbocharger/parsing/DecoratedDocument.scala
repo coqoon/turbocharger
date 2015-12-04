@@ -95,7 +95,11 @@ object DecoratedDocument {
     override def getLength() = length
     override def getOffset() = start
 
-    def translate(offset : Int) = Region(start + offset, length = length)
+    def move(o : Int) = Region(o, length = length)
+    def resize(l : Int) = Region(start, length = l)
+
+    def extend(l : Int) = Region(start, length = length + l)
+    def translate(o : Int) = Region(start + o, length = length)
     /* Returns the smallest Region containing both this region and @r. */
     def union(r : Region) = {
       val newStart = Math.min(start, r.start)
