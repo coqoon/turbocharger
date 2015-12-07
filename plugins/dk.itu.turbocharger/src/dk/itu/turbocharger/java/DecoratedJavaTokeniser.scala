@@ -1,6 +1,7 @@
 package dk.itu.turbocharger.java
 
 import dk.itu.turbocharger.parsing.Tokeniser
+import dk.itu.turbocharger.parsing.PushdownAutomaton.Transition
 
 object DecoratedJavaTokeniser extends Tokeniser {
   val java = Token(Partitioning.Java.ContentTypes.JAVA)
@@ -13,28 +14,29 @@ object DecoratedJavaTokeniser extends Tokeniser {
   val cc = Token(Partitioning.Coq.ContentTypes.COMMENT)
   val csl = Token(Partitioning.Coq.ContentTypes.STRING)
 
-  import DecoratedJavaRecogniser._
-  InterestingTransition(tJavaToChar, jcl, 1)
-  InterestingTransition(tCharToJava, java, 0)
-  InterestingTransition(tJavaToString, jsl, 1)
-  InterestingTransition(tStringToJava, java, 0)
-  InterestingTransition(tNCoqToChar, jcl, 1)
-  InterestingTransition(tNCoqToString, jsl, 1)
-  InterestingTransition(tNCommentToChar, jcl, 1)
-  InterestingTransition(tNCommentToString, jsl, 1)
-  InterestingTransition(tJavaToSLComment, jslc, 2)
-  InterestingTransition(tSLCommentToJava, java, 0)
-  InterestingTransition(tJavaToMLComment, jmlc, 2)
-  InterestingTransition(tMLCommentToJava, java, 0)
+  import DecoratedJavaRecogniser.States
+  TransitionInspector {
+    case Transition(_, _, _, _, States.javaChar) => Some((jcl, 1))
+    case Transition(_, _, _, _, States.javaString) => Some((jsl, 1))
+    case Transition(_, _, _, _, States.javaSingleLineComment) =>
+      Some((jslc, 2))
+    case Transition(_, _, _, _, States.javaMultiLineComment) => Some((jmlc, 2))
 
-  InterestingTransition(tJavaToCoq, coq, 2)
-  InterestingTransition(tCoqToJava, java, 0)
-  InterestingTransition(tCoqToString, csl, 1)
-  InterestingTransition(tNJavaToString, csl, 1)
-  InterestingTransition(tNCCommentToString, csl, 1)
-  InterestingTransition(tStringToCoq, coq, 0)
-  InterestingTransition(tCoqToComment, cc, 2)
-  InterestingTransition(tCommentToCoq, coq, 0)
+    case Transition(States.nearlyCoq, _, _, _, States.coq) => Some((coq, 2))
+    case Transition(States.nearlyJava, _, _, _, States.java) => Some((java, 0))
+
+    case Transition(_, _, _, _, States.coqString) => Some((csl, 1))
+    case Transition(_, _, _, _, States.coqComment) => Some((cc, 2))
+
+    case Transition(c, _, _, _, States.coq)
+        if c != States.coq =>
+      Some((coq, 0))
+    case Transition(j, _, _, _, States.java)
+        if j != States.java =>
+      Some((java, 0))
+
+    case _ => None
+  }
 
   def main(args : Array[String]) = {
     var line : Option[String] = None
