@@ -115,6 +115,8 @@ object JavaDefinitions {
       E_val(vint(Integer.parseInt(n.getToken)))
     case b : BooleanLiteral =>
       E_val(vbool(b.booleanValue))
+    case n : NullLiteral =>
+      E_val(null_j)
     case n : SimpleName =>
       expandNameLike(n) match {
         case sn :: Nil =>

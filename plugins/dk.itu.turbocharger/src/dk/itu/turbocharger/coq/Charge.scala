@@ -8,6 +8,9 @@ object Charge {
   type field_j = String
   type method_j = String
 
+  final val pnull_j : ptr_j = (0, "")
+  final val null_j = val_j.vptr(pnull_j)
+
   sealed trait val_j extends CoqTerm
   object val_j {
     def vint(a : Int) : val_j =
