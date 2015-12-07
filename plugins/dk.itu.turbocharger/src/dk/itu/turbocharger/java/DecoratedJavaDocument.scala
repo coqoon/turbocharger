@@ -157,22 +157,28 @@ object DecoratedJavaCoqDocument {
             p
           } else StringTerm("this") +: p
         }
-        val b = method.resolveBinding
-        /* We might want to use getQualifiedName in future here */
-        val definitionId =
-          s"${b.getDeclaringClass.getName}_${b.getName}"
 
-        val mb =
-          new Definition(definitionId + "_body", svisitor(method.getBody))
-        val md = new Definition(
-            definitionId + "_Method",
-            new ConstructorInvocation3(
-                "Build_Method",
-                ListTerm(parameters),
-                IdentifierTerm(definitionId + "_body"),
-                rvisitor(method)))
+        JavaDefinitions.methodBinding(method.getName) match {
+          case Some(b) =>
+            /* We might want to use getQualifiedName in future here */
+            val definitionId =
+              s"${b.getDeclaringClass.getName}_${b.getName}"
 
-        methods :+= (StringTerm(method.getName.getIdentifier), mb, md)
+            val mb =
+              new Definition(s"${definitionId}_body", svisitor(method.getBody))
+            val md = new Definition(
+                s"${definitionId}_Method",
+                new ConstructorInvocation3(
+                    "Build_Method",
+                    ListTerm(parameters),
+                    IdentifierTerm(s"${definitionId}_body"),
+                    rvisitor(method)))
+
+            methods :+= (StringTerm(method.getName.getIdentifier), mb, md)
+          case None =>
+            Console.err.println(
+                s"Binding resolution failed for ${method.getName}")
+        }
       } catch {
         case n : NotImplementedError =>
           Console.err.println("It is NO GOOD")

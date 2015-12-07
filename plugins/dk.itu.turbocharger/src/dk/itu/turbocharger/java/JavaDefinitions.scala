@@ -353,8 +353,9 @@ object JavaDefinitions {
     }
   }
 
-  def variableBinding(n : Name) =
-    TryCast[IVariableBinding](n.resolveBinding)
+  def binding(n : Name) = Option(n.resolveBinding)
+  def methodBinding(n : Name) = binding(n).flatMap(TryCast[IMethodBinding])
+  def variableBinding(n : Name) = binding(n).flatMap(TryCast[IVariableBinding])
 
   def expandNameLike(n : ASTNode) : List[String] = n match {
     case sn : SimpleName

@@ -82,36 +82,38 @@ object ProofExtraction {
               } finally pos += c.length
             }).flatten
       }
-      /* XXX: copy-and-paste from
-       * DecoratedJavaDocument.generateDefinitionsForType */
-      val b = method.resolveBinding
-      val definitionId =
-        s"${b.getDeclaringClass.getName}_${b.getName}"
+      import dk.itu.turbocharger.java.JavaDefinitions
+      JavaDefinitions.methodBinding(method.getName) match {
+        case Some(b) =>
+          val definitionId =
+            s"${b.getDeclaringClass.getName}_${b.getName}"
 
-      /* XXX: this is a terrible, ad-hoc way of finding the offsets for the
-       * pre- and postconditions */
-      val (preContent, postContent) =
-        (pre.map(_._1).getOrElse("True"),
-         post.map(_._1).getOrElse("True"))
-      val theorem =
-        Theorem(s"${definitionId}_s", ConstructorInvocation2(
-          "lentails",
-          IdentifierTerm("ltrue"),
-          ConstructorInvocation3(
-              "triple",
-              ArbitraryTerm(preContent),
-              ArbitraryTerm(postContent),
-              IdentifierTerm(s"${definitionId}_body"))))
-      val positions = Seq(
-          pre.map(p =>
-            Region(theorem.toString.indexOf(preContent),
-                length = p._1.length) -> p._2),
-          post.map(p =>
-            Region(theorem.toString.indexOf(postContent),
-                length = p._1.length) -> p._2)).flatten
-      ((theorem, Map.empty[Region, Int] ++ positions)) +:
-          ((Theorem.Proof, Map.empty[Region, Int]) +: sentences :+
-           (Theorem.Qed, Map.empty[Region, Int]))
+          /* XXX: this is a terrible, ad-hoc way of finding the offsets for the
+           * pre- and postconditions */
+          val (preContent, postContent) =
+            (pre.map(_._1).getOrElse("True"),
+             post.map(_._1).getOrElse("True"))
+          val theorem =
+            Theorem(s"${definitionId}_s", ConstructorInvocation2(
+              "lentails",
+              IdentifierTerm("ltrue"),
+              ConstructorInvocation3(
+                  "triple",
+                  ArbitraryTerm(preContent),
+                  ArbitraryTerm(postContent),
+                  IdentifierTerm(s"${definitionId}_body"))))
+          val positions = Seq(
+              pre.map(p =>
+                Region(theorem.toString.indexOf(preContent),
+                    length = p._1.length) -> p._2),
+              post.map(p =>
+                Region(theorem.toString.indexOf(postContent),
+                    length = p._1.length) -> p._2)).flatten
+          ((theorem, Map.empty[Region, Int] ++ positions)) +:
+              ((Theorem.Proof, Map.empty[Region, Int]) +: sentences :+
+               (Theorem.Qed, Map.empty[Region, Int]))
+        case _ => Seq()
+      }
     } else Seq()
   }
 }
