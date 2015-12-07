@@ -4,9 +4,17 @@ class Tokeniser {
   import Tokeniser._
 
   case class Token(label : String)
-  case class InterestingTransition(transition : RType#Transition,
-      begins : Token, leadin : Int) {
-    addInterestingTransition(this)
+  type TransitionInspector = Transition => Option[(Token, Int)]
+  protected object TransitionInspector {
+    def apply(transition : TransitionInspector) =
+      addTransitionInspector(transition)
+  }
+  protected object InterestingTransition {
+    def apply(transition : Transition, begins : Token, leadin : Int) =
+      addTransitionInspector {
+        case t if t == transition => Some((begins, leadin))
+        case _ => None
+      }
   }
 
   class TokenIterator(initialToken : Token, start : RType#Execution,
@@ -40,13 +48,16 @@ class Tokeniser {
           state.accept(c) match {
             case Some((t, e)) =>
               position += 1
-              interestingTransitions.get(t).foreach(t => {
-                val tokenContent = Substring(
-                    input, lastTokenStart, position - t.leadin)
-                nextToken = Some((lastTokenType, tokenContent.toString))
-                lastTokenStart = Math.max(0, position - t.leadin)
-                lastTokenType = t.begins
-              })
+              transitionInspectors.flatMap(ti => ti(t)).headOption foreach {
+                case (begins, leadin)
+                    if lastTokenType != begins =>
+                  val tokenContent = Substring(
+                      input, lastTokenStart, position - leadin)
+                  nextToken = Some((lastTokenType, tokenContent.toString))
+                  lastTokenStart = Math.max(0, position - leadin)
+                  lastTokenType = begins
+                case _ =>
+              }
               state = e
             case _ =>
               /* Oh no, bail out */
@@ -66,15 +77,15 @@ class Tokeniser {
     }
   }
 
-  private var interestingTransitions :
-      Map[RType#Transition, InterestingTransition] = Map()
-  private def addInterestingTransition(t : InterestingTransition) =
-    interestingTransitions += (t.transition -> t)
+  private var transitionInspectors : Seq[TransitionInspector] = Seq()
+  private def addTransitionInspector(t : TransitionInspector) =
+    transitionInspectors :+= t
 
   def tokens(initialToken : Token, start : RType#Execution,
       input : CharSequence) : Iterator[(Token, String)] =
     new TokenIterator(initialToken, start, input)
 }
 object Tokeniser {
-  type RType = PushdownAutomaton[Char]
+  protected type RType = PushdownAutomaton[Char]
+  protected type Transition = PushdownAutomaton.Transition[Char]
 }

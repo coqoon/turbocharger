@@ -2,7 +2,7 @@ package dk.itu.turbocharger.parsing
 
 class PushdownAutomaton[C] {
   import PushdownAutomaton.{State, Element}
-  type Transition = PushdownAutomaton.Transition[C]
+  private type Transition = PushdownAutomaton.Transition[C]
 
   protected object Actions {
     object Transition {
