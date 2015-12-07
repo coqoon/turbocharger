@@ -61,7 +61,6 @@ class DecoratedJavaPartitioner
   }
   override def getPartition(
       offset : Int, withEmptyPartitions : Boolean) : ITypedRegion = {
-    println(s"${this}.getPartition(${offset}, ${withEmptyPartitions})")
     var pos = 0
     for ((t, s) <- tokens.get) {
       val end = pos + s.length
