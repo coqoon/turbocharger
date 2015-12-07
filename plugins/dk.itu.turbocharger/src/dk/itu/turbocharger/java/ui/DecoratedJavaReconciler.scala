@@ -46,7 +46,8 @@ class DecoratedJavaReconciler(
                 _._1.toString.trim.length + 1)(0, d.toStream)
         }
         val syntheticMessages = pideDoc.left.toOption.map(e => new Message(
-            e.message, e.node.getStartPosition, e.node.getLength)).toSeq
+            s"${e.node.getClass.getSimpleName}: ${e.message}",
+            e.node.getStartPosition, e.node.getLength)).toSeq
         pideDoc.right.foreach(doc => {
           val rawEdits = editor.differ.makeEdits(
               doc.map(_._1.toString.trim + "\n").toList)
