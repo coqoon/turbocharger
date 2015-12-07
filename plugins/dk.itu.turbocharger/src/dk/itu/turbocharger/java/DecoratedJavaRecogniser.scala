@@ -37,65 +37,63 @@ object DecoratedJavaRecogniser extends PushdownAutomaton[Char] {
   import Actions._
   DefaultTransition(java, java)
 
-  val tJavaToChar = BasicTransition(java, '\'', javaChar)
+  BasicTransition(java, '\'', javaChar)
   DefaultTransition(javaChar, javaChar)
   BasicTransition(javaChar, '\\', javaCharEscape)
-  val tCharToJava = BasicTransition(javaChar, '\'', java)
+  BasicTransition(javaChar, '\'', java)
   DefaultTransition(javaCharEscape, javaChar)
 
-  val tJavaToString = BasicTransition(java, '\"', javaString)
+  BasicTransition(java, '\"', javaString)
   DefaultTransition(javaString, javaString)
   BasicTransition(javaString, '\\', javaStringEscape)
-  val tStringToJava = BasicTransition(javaString, '\"', java)
+  BasicTransition(javaString, '\"', java)
   DefaultTransition(javaStringEscape, javaString)
 
   BasicTransition(java, '/', nearlyJavaComment)
   DefaultTransition(nearlyJavaComment, java)
-  val tNCommentToChar = BasicTransition(nearlyJavaComment, '\'', javaChar)
-  val tNCommentToString = BasicTransition(nearlyJavaComment, '\"', javaString)
+  BasicTransition(nearlyJavaComment, '\'', javaChar)
+  BasicTransition(nearlyJavaComment, '\"', javaString)
 
-  val tJavaToSLComment =
-    BasicTransition(nearlyJavaComment, '/', javaSingleLineComment)
+  BasicTransition(nearlyJavaComment, '/', javaSingleLineComment)
   DefaultTransition(javaSingleLineComment, javaSingleLineComment)
-  val tSLCommentToJava = BasicTransition(javaSingleLineComment, '\n', java)
+  BasicTransition(javaSingleLineComment, '\n', java)
 
-  val tJavaToMLComment =
   BasicTransition(nearlyJavaComment, '*', javaMultiLineComment)
   DefaultTransition(javaMultiLineComment, javaMultiLineComment)
   BasicTransition(javaMultiLineComment, '*', nearlyOutOfJavaComment)
   DefaultTransition(nearlyOutOfJavaComment, javaMultiLineComment)
   BasicTransition(nearlyOutOfJavaComment, '*', nearlyOutOfJavaComment)
-  val tMLCommentToJava = BasicTransition(nearlyOutOfJavaComment, '/', java)
+  BasicTransition(nearlyOutOfJavaComment, '/', java)
 
   BasicTransition(java, '<', nearlyCoq)
-  val tNCoqToString = BasicTransition(nearlyCoq, '"', coqString)
-  val tNCoqToChar = BasicTransition(nearlyCoq, '\'', javaChar)
+  BasicTransition(nearlyCoq, '"', coqString)
+  BasicTransition(nearlyCoq, '\'', javaChar)
   BasicTransition(nearlyCoq, '/', nearlyJavaComment)
   DefaultTransition(nearlyCoq, java)
-  val tJavaToCoq = BasicTransition(nearlyCoq, '%', coq)
+  BasicTransition(nearlyCoq, '%', coq)
 
   BasicTransition(coq, '%', nearlyJava)
-  val tNJavaToString = BasicTransition(nearlyJava, '"', coqString)
+  BasicTransition(nearlyJava, '"', coqString)
   BasicTransition(nearlyJava, '(', nearlyCoqComment)
   DefaultTransition(nearlyJava, coq)
-  val tCoqToJava = BasicTransition(nearlyJava, '>', java)
+  BasicTransition(nearlyJava, '>', java)
 
   DefaultTransition(coq, coq)
 
-  val tCoqToString = BasicTransition(coq, '"', coqString)
+  BasicTransition(coq, '"', coqString)
   DefaultTransition(coqString, coqString)
   BasicTransition(coqStringEscape, '\\', coqStringEscape)
-  val tStringToCoq = BasicTransition(coqString, '\"', coq)
+  BasicTransition(coqString, '\"', coq)
   DefaultTransition(coqStringEscape, coqString)
 
   BasicTransition(coq, '(', nearlyCoqComment)
-  val tNCCommentToString = BasicTransition(nearlyCoqComment, '"', coqString)
+  BasicTransition(nearlyCoqComment, '"', coqString)
   DefaultTransition(nearlyCoqComment, coq)
   BasicTransition(nearlyCoqComment, '(', nearlyCoqComment)
-  val tCoqToComment = BasicTransition(nearlyCoqComment, '*', coqComment)
+  BasicTransition(nearlyCoqComment, '*', coqComment)
 
   DefaultTransition(coqComment, coqComment)
-  val commentElement = Element("COM!")
+  val commentElement = Element("Coq comment")
 
   BasicTransition(coqComment, '(', nearlyNestedCoqComment)
   DefaultTransition(nearlyNestedCoqComment, coqComment)
@@ -108,5 +106,5 @@ object DecoratedJavaRecogniser extends PushdownAutomaton[Char] {
   BasicTransition(nearlyOutOfCoqComment, '*', nearlyOutOfCoqComment)
   Transition(nearlyOutOfCoqComment,
       Some(commentElement), Some(')'), None, coqComment)
-  val tCommentToCoq = BasicTransition(nearlyOutOfCoqComment, ')', coq)
+  BasicTransition(nearlyOutOfCoqComment, ')', coq)
 }
