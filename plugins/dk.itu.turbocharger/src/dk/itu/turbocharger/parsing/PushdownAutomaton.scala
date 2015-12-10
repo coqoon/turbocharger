@@ -1,6 +1,11 @@
 package dk.itu.turbocharger.parsing
 
 class PushdownAutomaton[C] {
+  def this(a : PushdownAutomaton[C]*) = {
+    this()
+    a.foreach(a => transitions ++= a.transitions)
+  }
+
   import PushdownAutomaton.{State, Element}
   private type Transition = PushdownAutomaton.Transition[C]
 
