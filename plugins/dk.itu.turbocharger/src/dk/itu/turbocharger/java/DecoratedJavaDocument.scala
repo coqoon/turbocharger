@@ -1,11 +1,12 @@
 package dk.itu.turbocharger.java
 
 import dk.itu.coqoon.core.utilities.CacheSlot
-import dk.itu.turbocharger.parsing.{Tokeniser, DecoratedDocument}
+import dk.itu.turbocharger.parsing.{
+  Tokeniser, DecoratedDocument, PushdownAutomaton}
 import org.eclipse.core.resources.IFile
 
 class DecoratedJavaDocument(
-    val file : IFile, tokens : Seq[(Tokeniser#Token, String)])
+    val file : IFile, tokens : Seq[(PushdownAutomaton.State, String)])
     extends DecoratedDocument(tokens) {
   def getCoqView() = new TypedView(Partitioning.Coq.ContentTypes.COQ)
   def getJavaView() = new TypedView(Partitioning.Java.ContentTypes.JAVA)

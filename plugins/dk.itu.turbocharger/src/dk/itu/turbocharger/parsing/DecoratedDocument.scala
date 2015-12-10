@@ -85,7 +85,7 @@ class DecoratedDocument(
   def getTokensWithPositions() : Stream[(Int, Token)] = tokens
 }
 object DecoratedDocument {
-  type Token = (Tokeniser#Token, String)
+  type Token = (PushdownAutomaton.State, String)
   type Tokens = Seq[Token]
   case class Region(
       start : Int, length : Int) extends org.eclipse.jface.text.IRegion {

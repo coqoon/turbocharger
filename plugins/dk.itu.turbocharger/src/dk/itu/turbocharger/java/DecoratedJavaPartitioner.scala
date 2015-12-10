@@ -62,17 +62,30 @@ class DecoratedJavaPartitioner
   override def getPartition(
       offset : Int, withEmptyPartitions : Boolean) : ITypedRegion = {
     var pos = 0
-    for ((t, s) <- tokens.get) {
+    for ((t, s) <- tokens.get;
+         label <- DecoratedJavaPartitioner.mapping.get(t)) {
       val end = pos + s.length
       if (offset >= pos &&
           (offset < end || document.map(_.getLength).contains(offset))) {
-        return new TypedRegion(pos, s.length, t.label)
+        return new TypedRegion(pos, s.length, label)
       } else pos = end
     }
     return null
   }
 }
 object DecoratedJavaPartitioner {
+  import Partitioning._
+  import DecoratedJavaRecogniser.States
+  private[DecoratedJavaPartitioner] val mapping = Map(
+      States.java -> Partitioning.Java.ContentTypes.JAVA,
+      States.javaChar -> Partitioning.Java.ContentTypes.CHAR,
+      States.javaString -> Partitioning.Java.ContentTypes.STRING,
+      States.javaMultiLineComment -> Partitioning.Java.ContentTypes.COMMENT,
+      States.javaSingleLineComment -> Partitioning.Java.ContentTypes.COMMENT,
+      States.coq -> Partitioning.Coq.ContentTypes.COQ,
+      States.coqString -> Partitioning.Coq.ContentTypes.STRING,
+      States.coqComment -> Partitioning.Coq.ContentTypes.COMMENT)
+
   def installPartitioner(input : IDocument, partitioning : String) = {
     import dk.itu.coqoon.core.utilities.TryCast
     val partitioner = createPartitioner

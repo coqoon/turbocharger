@@ -2,8 +2,8 @@ package dk.itu.turbocharger.parsing
 
 class Tokeniser {
   import Tokeniser._
+  import PushdownAutomaton.{State => Token}
 
-  case class Token(label : String)
   type TransitionInspector = Transition => Option[(Token, Int)]
   protected object TransitionInspector {
     def apply(transition : TransitionInspector) =
@@ -61,6 +61,7 @@ class Tokeniser {
               state = e
             case _ =>
               /* Oh no, bail out */
+              ???
           }
         }
 
@@ -81,9 +82,9 @@ class Tokeniser {
   private def addTransitionInspector(t : TransitionInspector) =
     transitionInspectors :+= t
 
-  def tokens(initialToken : Token, start : RType#Execution,
+  def tokens(start : RType#Execution,
       input : CharSequence) : Iterator[(Token, String)] =
-    new TokenIterator(initialToken, start, input)
+    new TokenIterator(start.position, start, input)
 }
 object Tokeniser {
   protected type RType = PushdownAutomaton[Char]
