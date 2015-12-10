@@ -74,17 +74,19 @@ class DecoratedJavaPartitioner
   }
 }
 object DecoratedJavaPartitioner {
-  import Partitioning._
-  import DecoratedJavaRecogniser.States
-  private[DecoratedJavaPartitioner] val mapping = Map(
-      States.java -> Partitioning.Java.ContentTypes.JAVA,
-      States.javaChar -> Partitioning.Java.ContentTypes.CHAR,
-      States.javaString -> Partitioning.Java.ContentTypes.STRING,
-      States.javaMultiLineComment -> Partitioning.Java.ContentTypes.COMMENT,
-      States.javaSingleLineComment -> Partitioning.Java.ContentTypes.COMMENT,
-      States.coq -> Partitioning.Coq.ContentTypes.COQ,
-      States.coqString -> Partitioning.Coq.ContentTypes.STRING,
-      States.coqComment -> Partitioning.Coq.ContentTypes.COMMENT)
+  private[DecoratedJavaPartitioner] val mapping = {
+    import Partitioning._
+    import CoqRecogniser.States._
+    import JavaRecogniser.States._
+    Map(java -> Java.ContentTypes.JAVA,
+        javaChar -> Java.ContentTypes.CHAR,
+        javaString -> Java.ContentTypes.STRING,
+        javaMultiLineComment -> Java.ContentTypes.COMMENT,
+        javaSingleLineComment -> Java.ContentTypes.COMMENT,
+        coq -> Coq.ContentTypes.COQ,
+        coqString -> Coq.ContentTypes.STRING,
+        coqComment -> Coq.ContentTypes.COMMENT)
+  }
 
   def installPartitioner(input : IDocument, partitioning : String) = {
     import dk.itu.coqoon.core.utilities.TryCast
