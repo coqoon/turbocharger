@@ -6,12 +6,15 @@ class Tokeniser {
 
   type TransitionInspector = Transition => Option[(Token, Int)]
   protected object TransitionInspector {
-    def apply(transition : TransitionInspector) =
-      addTransitionInspector(transition)
+    def apply(transition : TransitionInspector) = append(transition)
+    def append(transition : TransitionInspector) =
+      appendTransitionInspector(transition)
+    def prepend(transition : TransitionInspector) =
+      prependTransitionInspector(transition)
   }
   protected object InterestingTransition {
     def apply(transition : Transition, begins : Token, leadin : Int) =
-      addTransitionInspector {
+      appendTransitionInspector {
         case t if t == transition => Some((begins, leadin))
         case _ => None
       }
@@ -79,8 +82,10 @@ class Tokeniser {
   }
 
   private var transitionInspectors : Seq[TransitionInspector] = Seq()
-  private def addTransitionInspector(t : TransitionInspector) =
+  private def appendTransitionInspector(t : TransitionInspector) =
     transitionInspectors :+= t
+  private def prependTransitionInspector(t : TransitionInspector) =
+    transitionInspectors +:= t
 
   def tokens(start : RType#Execution,
       input : CharSequence) : Iterator[(Token, String)] =
