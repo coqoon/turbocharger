@@ -1,9 +1,9 @@
 package dk.itu.turbocharger.java
 
 import org.eclipse.jface.text.{IDocument, IDocumentExtension3}
-import org.eclipse.jface.text.{TypedRegion, ITypedRegion}
-import org.eclipse.jface.text.{
-  DocumentEvent, IDocumentPartitioner, IDocumentPartitionerExtension2}
+import org.eclipse.jface.text.{IRegion, TypedRegion, ITypedRegion}
+import org.eclipse.jface.text.{DocumentEvent, IDocumentPartitioner,
+  IDocumentPartitionerExtension, IDocumentPartitionerExtension2}
 
 import dk.itu.coqoon.core.utilities.CacheSlot
 import dk.itu.turbocharger.parsing.{Tokeniser, PushdownAutomaton}
@@ -11,13 +11,17 @@ import dk.itu.turbocharger.parsing.{Tokeniser, PushdownAutomaton}
 class TokeniserDrivenPartitioner(
     t : Tokeniser, start : PushdownAutomaton[Char]#Execution,
     mapping : Map[PushdownAutomaton.State, String])
-    extends IDocumentPartitioner with IDocumentPartitionerExtension2 {
+    extends IDocumentPartitioner with IDocumentPartitionerExtension
+        with IDocumentPartitionerExtension2 {
   private val tokens = CacheSlot {
     t.tokens(start, this.document.get.get).toList
   }
 
   def getTokens() = tokens.get
 
+  /* Defer to the IDocumentPartitionerExtension version of this method */
+  override def documentChanged(ev : DocumentEvent) =
+    (documentChanged2(ev) != null)
   /* Defer to the IDocumentPartitionerExtension2 versions of these methods */
   override def computePartitioning(
       offset : Int, length : Int) = computePartitioning(offset, length, false)
@@ -33,11 +37,12 @@ class TokeniserDrivenPartitioner(
   override def disconnect() : Unit = {
     this.document = None
   }
-  override def documentAboutToBeChanged(ev: DocumentEvent) : Unit =
-    println(s"${this}.documentAboutToBeChanged(${ev})")
-  override def documentChanged(ev : DocumentEvent) : Boolean = {
+
+  override def documentAboutToBeChanged(ev: DocumentEvent) : Unit = ()
+  override def documentChanged2(ev : DocumentEvent) : IRegion = {
     tokens.clear
-    true
+    dk.itu.turbocharger.parsing.DecoratedDocument.Region(
+        0, length = ev.fDocument.getLength)
   }
   override def getLegalContentTypes() = Partitioning.TYPES
 
