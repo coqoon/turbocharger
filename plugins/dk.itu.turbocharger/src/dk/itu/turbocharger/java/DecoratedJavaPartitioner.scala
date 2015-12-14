@@ -6,11 +6,14 @@ import org.eclipse.jface.text.{
   DocumentEvent, IDocumentPartitioner, IDocumentPartitionerExtension2}
 
 import dk.itu.coqoon.core.utilities.CacheSlot
+import dk.itu.turbocharger.parsing.{Tokeniser, PushdownAutomaton}
 
-class DecoratedJavaPartitioner
+class TokeniserDrivenPartitioner(
+    t : Tokeniser, start : PushdownAutomaton[Char]#Execution,
+    mapping : Map[PushdownAutomaton.State, String])
     extends IDocumentPartitioner with IDocumentPartitionerExtension2 {
   private val tokens = CacheSlot {
-    DecoratedJavaTokeniser.tokenise(this.document.get.get).toList
+    t.tokens(start, this.document.get.get).toList
   }
 
   def getTokens() = tokens.get
@@ -63,7 +66,7 @@ class DecoratedJavaPartitioner
       offset : Int, withEmptyPartitions : Boolean) : ITypedRegion = {
     var pos = 0
     for ((t, s) <- tokens.get;
-         label <- DecoratedJavaPartitioner.mapping.get(t)) {
+         label <- mapping.get(t)) {
       val end = pos + s.length
       if (offset >= pos &&
           (offset < end || document.map(_.getLength).contains(offset))) {
@@ -73,6 +76,11 @@ class DecoratedJavaPartitioner
     return null
   }
 }
+
+class DecoratedJavaPartitioner extends TokeniserDrivenPartitioner(
+    DecoratedJavaTokeniser,
+    DecoratedJavaRecogniser.Execution(JavaRecogniser.States.java, Seq()),
+    DecoratedJavaPartitioner.mapping)
 object DecoratedJavaPartitioner {
   import dk.itu.turbocharger.coq.CoqRecogniser
   private[DecoratedJavaPartitioner] val mapping = {
