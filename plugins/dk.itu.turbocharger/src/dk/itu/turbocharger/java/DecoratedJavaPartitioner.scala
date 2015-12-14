@@ -42,12 +42,11 @@ class TokeniserDrivenPartitioner(
 
   private var document : Option[IDocument] = None
 
-  override def connect(document : IDocument) : Unit = {
+  override def connect(document : IDocument) : Unit =
     this.document = Option(document)
-    tokens.get
-  }
   override def disconnect() : Unit = {
     this.document = None
+    tokens.clear
   }
 
   override def documentAboutToBeChanged(ev: DocumentEvent) : Unit = ()
