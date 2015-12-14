@@ -21,7 +21,7 @@ object DocumentAdapter {
 }
 
 class TokeniserDrivenPartitioner(
-    t : Tokeniser, start : PushdownAutomaton[Char]#Execution,
+    t : Tokeniser, start : PushdownAutomaton.State,
     mapping : Map[PushdownAutomaton.State, String])
     extends IDocumentPartitioner with IDocumentPartitionerExtension
         with IDocumentPartitionerExtension2 {
@@ -95,8 +95,7 @@ class TokeniserDrivenPartitioner(
 }
 
 class DecoratedJavaPartitioner extends TokeniserDrivenPartitioner(
-    DecoratedJavaTokeniser,
-    DecoratedJavaRecogniser.Execution(JavaRecogniser.States.java, Seq()),
+    DecoratedJavaTokeniser, JavaRecogniser.States.java,
     DecoratedJavaPartitioner.mapping)
 object DecoratedJavaPartitioner {
   import dk.itu.turbocharger.coq.CoqRecogniser

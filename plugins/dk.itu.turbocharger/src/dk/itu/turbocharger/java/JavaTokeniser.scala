@@ -54,7 +54,7 @@ object JavaRecogniser extends PushdownAutomaton[Char] {
   BasicTransition(nearlyOutOfJavaComment, '/', java)
 }
 
-object JavaTokeniser extends Tokeniser {
+object JavaTokeniser extends Tokeniser(JavaRecogniser) {
   import PushdownAutomaton.{State, Transition}
   import JavaRecogniser.{States => Java}
 

@@ -53,7 +53,7 @@ object CoqRecogniser extends PushdownAutomaton[Char] {
   BasicTransition(nearlyOutOfCoqComment, ')', coq)
 }
 
-object CoqTokeniser extends Tokeniser {
+object CoqTokeniser extends Tokeniser(CoqRecogniser) {
   import PushdownAutomaton.{State, Transition}
   import CoqRecogniser.{States => Coq}
 

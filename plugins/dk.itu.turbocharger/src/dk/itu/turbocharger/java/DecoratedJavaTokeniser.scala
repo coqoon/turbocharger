@@ -3,7 +3,7 @@ package dk.itu.turbocharger.java
 import dk.itu.turbocharger.parsing.Tokeniser
 import dk.itu.turbocharger.parsing.PushdownAutomaton.{State, Transition}
 
-object DecoratedJavaTokeniser extends Tokeniser {
+object DecoratedJavaTokeniser extends Tokeniser(DecoratedJavaRecogniser) {
   import dk.itu.turbocharger.coq.{CoqTokeniser, CoqRecogniser}
   import CoqRecogniser.{States => Coq}
   import JavaRecogniser.{States => Java}
@@ -28,5 +28,5 @@ object DecoratedJavaTokeniser extends Tokeniser {
   }
 
   def tokenise(input : String, start : State = Java.java) =
-    tokens(DecoratedJavaRecogniser.Execution(start, Seq()), input)
+    tokens(start, input)
 }

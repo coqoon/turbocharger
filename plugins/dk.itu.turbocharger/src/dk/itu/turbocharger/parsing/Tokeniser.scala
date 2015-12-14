@@ -1,6 +1,6 @@
 package dk.itu.turbocharger.parsing
 
-class Tokeniser {
+class Tokeniser(val automaton : PushdownAutomaton[Char]) {
   import Tokeniser._
   import PushdownAutomaton.{State => Token}
 
@@ -87,9 +87,9 @@ class Tokeniser {
   private def prependTransitionInspector(t : TransitionInspector) =
     transitionInspectors +:= t
 
-  def tokens(start : RType#Execution,
+  def tokens(start : PushdownAutomaton.State,
       input : CharSequence) : Iterator[(Token, String)] =
-    new TokenIterator(start.position, start, input)
+    new TokenIterator(start, automaton.Execution(start, Seq()), input)
 }
 object Tokeniser {
   protected type RType = PushdownAutomaton[Char]
