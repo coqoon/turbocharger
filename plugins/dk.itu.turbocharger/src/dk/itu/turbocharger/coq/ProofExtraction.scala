@@ -22,7 +22,7 @@ object ProofExtraction {
       langView : DecoratedDocument#TypedView,
       coqView : DecoratedDocument#TypedView) = {
     import dk.itu.turbocharger.java.{Partitioning, DecoratedJavaCoqDocument}
-    import Partitioning.Coq.ContentTypes.COQ
+    import CoqRecogniser.States.{base => COQ}
     val pt =
       doc.getPartialTokens(sr) match {
         case Some((start, tokens)) =>

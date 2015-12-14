@@ -70,7 +70,7 @@ object DecoratedJavaCoqDocument {
 
       /* XXX: This is literally copied-and-pasted from
        * ProofExtraction.extractProof. Surely we can do better? */
-      import Partitioning.Coq.ContentTypes.COQ
+      import CoqStates.{base => COQ}
       val pt =
         simplify(COQ, doc.getPartialTokens(Region(0, length = initEnd)) match {
           case Some((start, tokens)) =>
