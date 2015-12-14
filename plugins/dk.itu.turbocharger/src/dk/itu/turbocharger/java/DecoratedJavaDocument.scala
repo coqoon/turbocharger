@@ -1,6 +1,8 @@
 package dk.itu.turbocharger.java
 
 import dk.itu.coqoon.core.utilities.CacheSlot
+import dk.itu.turbocharger.coq.CoqRecogniser.{States => CoqStates}
+import dk.itu.turbocharger.java.JavaRecogniser.{States => JavaStates}
 import dk.itu.turbocharger.parsing.{
   Tokeniser, DecoratedDocument, PushdownAutomaton}
 import org.eclipse.core.resources.IFile
@@ -8,8 +10,8 @@ import org.eclipse.core.resources.IFile
 class DecoratedJavaDocument(
     val file : IFile, tokens : Seq[(PushdownAutomaton.State, String)])
     extends DecoratedDocument(tokens) {
-  def getCoqView() = new TypedView(Partitioning.Coq.ContentTypes.COQ)
-  def getJavaView() = new TypedView(Partitioning.Java.ContentTypes.JAVA)
+  def getCoqView() = new TypedView(CoqStates.base)
+  def getJavaView() = new TypedView(JavaStates.base)
 
   private lazy val compilationUnit = {
     import org.eclipse.jdt.core.JavaCore
