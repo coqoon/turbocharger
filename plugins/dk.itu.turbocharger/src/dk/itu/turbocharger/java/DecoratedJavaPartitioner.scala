@@ -8,13 +8,25 @@ import org.eclipse.jface.text.{DocumentEvent, IDocumentPartitioner,
 import dk.itu.coqoon.core.utilities.CacheSlot
 import dk.itu.turbocharger.parsing.{Tokeniser, PushdownAutomaton}
 
+object DocumentAdapter {
+  class DocumentSequence(
+      d : IDocument, start : Int, end : Int) extends CharSequence {
+    final lazy val length = end - start
+    override def charAt(pos : Int) = d.getChar(start + pos)
+    override def subSequence(start : Int, end : Int) =
+      new DocumentSequence(d, start + start, start + end)
+  }
+  def makeSequence(d : IDocument) : CharSequence =
+    new DocumentSequence(d, 0, d.getLength)
+}
+
 class TokeniserDrivenPartitioner(
     t : Tokeniser, start : PushdownAutomaton[Char]#Execution,
     mapping : Map[PushdownAutomaton.State, String])
     extends IDocumentPartitioner with IDocumentPartitionerExtension
         with IDocumentPartitionerExtension2 {
   private val tokens = CacheSlot {
-    t.tokens(start, this.document.get.get).toList
+    t.tokens(start, DocumentAdapter.makeSequence(this.document.get)).toList
   }
 
   def getTokens() = tokens.get
