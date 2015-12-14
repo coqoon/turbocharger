@@ -74,6 +74,7 @@ class DecoratedJavaPartitioner
   }
 }
 object DecoratedJavaPartitioner {
+  import dk.itu.turbocharger.coq.CoqRecogniser
   private[DecoratedJavaPartitioner] val mapping = {
     import Partitioning._
     import CoqRecogniser.States._
