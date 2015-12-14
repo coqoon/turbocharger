@@ -5,19 +5,20 @@ import dk.itu.turbocharger.parsing.{Tokeniser, PushdownAutomaton}
 object JavaRecogniser extends PushdownAutomaton[Char] {
   object States {
     import PushdownAutomaton.State
+    val base = "JavaTokeniser:"
 
-    val java = State("Java")
+    val java = State(s"${base}Java")
 
-    val javaString = State("Java string")
-    val javaStringEscape = State("Java string escape")
+    val javaString = State(s"${base}Java string")
+    val javaStringEscape = State(s"${base}Java string escape")
 
-    val javaChar = State("Java character")
-    val javaCharEscape = State("Java character escape")
+    val javaChar = State(s"${base}Java character")
+    val javaCharEscape = State(s"${base}Java character escape")
 
-    val nearlyJavaComment = State("Nearly Java comment")
-    val javaSingleLineComment = State("Java single-line comment")
-    val javaMultiLineComment = State("Java multi-line comment")
-    val nearlyOutOfJavaComment = State("Nearly out of Java comment")
+    val nearlyJavaComment = State(s"${base}Nearly Java comment")
+    val javaSingleLineComment = State(s"${base}Java single-line comment")
+    val javaMultiLineComment = State(s"${base}Java multi-line comment")
+    val nearlyOutOfJavaComment = State(s"${base}Nearly out of Java comment")
   }
 
   import States._

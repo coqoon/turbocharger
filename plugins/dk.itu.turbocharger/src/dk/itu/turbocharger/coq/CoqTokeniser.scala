@@ -7,16 +7,17 @@ object CoqRecogniser extends PushdownAutomaton[Char] {
 
   object States {
     import PushdownAutomaton.State
+    val base = "CoqRecogniser:"
 
-    val coq = State("Coq")
-    val coqComment = State("Coq comment")
-    val coqString = State("Coq string")
+    val coq = State(s"${base}Coq")
+    val coqComment = State(s"${base}Coq comment")
+    val coqString = State(s"${base}Coq string")
 
-    val nearlyCoqComment = State("Nearly Coq comment")
-    val nearlyNestedCoqComment = State("Nearly nested Coq comment")
-    val nearlyOutOfCoqComment = State("Nearly out of Coq comment")
+    val nearlyCoqComment = State(s"${base}Nearly Coq comment")
+    val nearlyNestedCoqComment = State(s"${base}Nearly nested Coq comment")
+    val nearlyOutOfCoqComment = State(s"${base}Nearly out of Coq comment")
 
-    val coqStringEscape = State("Coq string escape")
+    val coqStringEscape = State(s"${base}Coq string escape")
   }
 
   import States._
