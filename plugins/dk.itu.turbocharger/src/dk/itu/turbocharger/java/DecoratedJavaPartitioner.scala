@@ -107,7 +107,7 @@ class TokeniserDrivenPartitioner(
   override def getPartition(
       offset : Int, withEmptyPartitions : Boolean) : ITypedRegion = {
     var pos = 0
-    for ((t, s) <- tokens.get;
+    for ((t, s) <- getTokens if withEmptyPartitions || !s.isEmpty;
          label <- mapping.get(t)) {
       val end = pos + s.length
       if (offset >= pos &&
