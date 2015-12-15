@@ -77,11 +77,27 @@ class TokeniserDrivenPartitioner(
   override def getActiveRewriteSession() = session.orNull
 
   override def documentAboutToBeChanged(ev: DocumentEvent) : Unit = ()
-  override def documentChanged2(ev : DocumentEvent) : IRegion = {
-    tokens.clear
-    dk.itu.turbocharger.parsing.DecoratedDocument.Region(
-        0, length = ev.fDocument.getLength)
-  }
+  /* This is a bit dodgy: we return the correct changed region of the document,
+   * but we completely destroy all of the cached tokens in the process! (We
+   * have to destroy at least some of the tokens to stop them becoming stale,
+   * though...) */
+  override def documentChanged2(ev : DocumentEvent) : IRegion =
+    tokens.asOption match {
+      case Some(ts) =>
+        tokens.clear
+        var pos = 0
+        for ((t, s) <- ts) {
+          val tr = Region(pos, length = s.length)
+          if (tr.contains(ev.fOffset)) {
+            return tr.resize(ev.fDocument.getLength - pos)
+          } else pos = tr.end
+        }
+        null
+      case None =>
+        /* To err on the safe side, claim that everything's changed */
+        Region(0, length = ev.fDocument.getLength)
+    }
+
   override def getLegalContentTypes() = Partitioning.TYPES
 
   override def computePartitioning(offset : Int, length : Int,
