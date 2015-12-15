@@ -119,6 +119,8 @@ object DecoratedDocument {
     def contains(p : Int) = (p >= start && p < end)
     def contains(r : Region) = (union(r) == this)
 
+    def asTypedRegion(t : String) =
+      new org.eclipse.jface.text.TypedRegion(start, length, t)
     def makePosition() = new org.eclipse.jface.text.Position(start, length)
   }
   trait View {
