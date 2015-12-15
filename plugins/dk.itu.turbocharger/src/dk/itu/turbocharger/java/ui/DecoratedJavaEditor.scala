@@ -245,10 +245,18 @@ class DecoratedJavaEditor
     (fi, partitioner) match {
       case (Some(f), Some(p)) =>
         differ.makeEdits(List())
-        import dk.itu.turbocharger.java.{
+        import dk.itu.turbocharger.java.{JavaDefinitions,
           DecoratedJavaDocument, DecoratedJavaCoqDocument}
         val doc = new DecoratedJavaDocument(f.getFile, p.getTokens)
-        val pdoc = DecoratedJavaCoqDocument.generateCompletePIDEDocument(doc)
+        val pdoc =
+          try {
+            DecoratedJavaCoqDocument.generateCompletePIDEDocument(doc)
+          } catch {
+            case p : JavaDefinitions.UnsupportedException =>
+              /* FIXME: We do actually want error reporting, even at this early
+               * point */
+              Seq()
+          }
         val text = pdoc.map(_._1.toString.trim + "\n").toList
         List[Document.Node.Edit[Text.Edit, Text.Perspective]](
             Document.Node.Clear(),
