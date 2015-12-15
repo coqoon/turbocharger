@@ -1,13 +1,14 @@
 package dk.itu.turbocharger.java
 
 import org.eclipse.jface.text.{IDocument, IDocumentExtension3}
-import org.eclipse.jface.text.{IRegion, TypedRegion, ITypedRegion}
+import org.eclipse.jface.text.{IRegion, ITypedRegion}
 import org.eclipse.jface.text.{DocumentEvent, IDocumentPartitioner,
   IDocumentPartitionerExtension, IDocumentPartitionerExtension2,
   IDocumentPartitionerExtension3}
 
 import dk.itu.coqoon.core.utilities.CacheSlot
 import dk.itu.turbocharger.parsing.{Tokeniser, PushdownAutomaton}
+import dk.itu.turbocharger.parsing.DecoratedDocument.Region
 
 object DocumentAdapter {
   class DocumentSequence(
@@ -109,11 +110,10 @@ class TokeniserDrivenPartitioner(
     var pos = 0
     for ((t, s) <- getTokens if withEmptyPartitions || !s.isEmpty;
          label <- mapping.get(t)) {
-      val end = pos + s.length
-      if (offset >= pos &&
-          (offset < end || document.map(_.getLength).contains(offset))) {
-        return new TypedRegion(pos, s.length, label)
-      } else pos = end
+      val tr = Region(pos, length = s.length)
+      if (tr.contains(offset) || document.map(_.getLength).contains(offset)) {
+        return tr.asTypedRegion(label)
+      } else pos = tr.end
     }
     return null
   }
