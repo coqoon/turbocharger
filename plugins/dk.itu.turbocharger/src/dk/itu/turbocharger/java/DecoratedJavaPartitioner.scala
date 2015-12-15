@@ -98,7 +98,8 @@ class TokeniserDrivenPartitioner(
         Region(0, length = ev.fDocument.getLength)
     }
 
-  override def getLegalContentTypes() = Partitioning.TYPES
+  private final lazy val contentTypes = mapping.values.toSet.toArray
+  override def getLegalContentTypes() = contentTypes
 
   override def computePartitioning(offset : Int, length : Int,
       withEmptyPartitions : Boolean) : Array[ITypedRegion] = {
