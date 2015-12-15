@@ -3,7 +3,8 @@ package dk.itu.turbocharger.java
 import org.eclipse.jface.text.{IDocument, IDocumentExtension3}
 import org.eclipse.jface.text.{IRegion, TypedRegion, ITypedRegion}
 import org.eclipse.jface.text.{DocumentEvent, IDocumentPartitioner,
-  IDocumentPartitionerExtension, IDocumentPartitionerExtension2}
+  IDocumentPartitionerExtension, IDocumentPartitionerExtension2,
+  IDocumentPartitionerExtension3}
 
 import dk.itu.coqoon.core.utilities.CacheSlot
 import dk.itu.turbocharger.parsing.{Tokeniser, PushdownAutomaton}
@@ -23,8 +24,10 @@ object DocumentAdapter {
 class TokeniserDrivenPartitioner(
     t : Tokeniser, start : PushdownAutomaton.State,
     mapping : Map[PushdownAutomaton.State, String])
-    extends IDocumentPartitioner with IDocumentPartitionerExtension
-        with IDocumentPartitionerExtension2 {
+    extends IDocumentPartitioner
+        with IDocumentPartitionerExtension
+        with IDocumentPartitionerExtension2
+        with IDocumentPartitionerExtension3 {
   private val tokens = CacheSlot {
     t.tokens(start, DocumentAdapter.makeSequence(this.document.get)).toList
   }
@@ -39,15 +42,38 @@ class TokeniserDrivenPartitioner(
       offset : Int, length : Int) = computePartitioning(offset, length, false)
   override def getPartition(offset : Int) = getPartition(offset, false)
   override def getContentType(offset : Int) = getContentType(offset, false)
+  /* Defer to the IDocumentPartitionerExtension3 version of this method */
+  override def connect(document : IDocument) : Unit = connect(document, false)
 
   private var document : Option[IDocument] = None
 
-  override def connect(document : IDocument) : Unit =
+  override def connect(
+      document : IDocument, delayInitialisation : Boolean) : Unit = {
     this.document = Option(document)
+    if (!delayInitialisation)
+      getTokens()
+  }
   override def disconnect() : Unit = {
     this.document = None
     tokens.clear
   }
+
+  import org.eclipse.jface.text.DocumentRewriteSession
+  private var session : Option[DocumentRewriteSession] = None
+  override def startRewriteSession(session : DocumentRewriteSession) =
+    this.session match {
+      case Some(s) =>
+        throw new IllegalStateException("Rewrite session already underway")
+      case None =>
+        this.session = Option(session)
+    }
+  override def stopRewriteSession(session : DocumentRewriteSession) =
+    this.session match {
+      case Some(s) if s == session =>
+        this.session = None
+      case _ =>
+    }
+  override def getActiveRewriteSession() = session.orNull
 
   override def documentAboutToBeChanged(ev: DocumentEvent) : Unit = ()
   override def documentChanged2(ev : DocumentEvent) : IRegion = {
