@@ -102,7 +102,6 @@ class TokeniserDrivenPartitioner(
 
   override def computePartitioning(offset : Int, length : Int,
       withEmptyPartitions : Boolean) : Array[ITypedRegion] = {
-    println(s"${this}.computePartitioning(${offset}, ${length}, ${withEmptyPartitions})")
     var (i, end) = (offset, offset + length)
     var s = Seq[ITypedRegion]()
     while (i < end) {
@@ -117,8 +116,6 @@ class TokeniserDrivenPartitioner(
       withEmptyPartitions : Boolean) : String =
     getPartition(offset, withEmptyPartitions).getType
   override def getManagingPositionCategories() : Array[String] = {
-    /*println(s"${this}.getManagingPositionCategories()")
-    return Array.empty*/
     null /* XXX: should we stash the partition information in the document? */
   }
   override def getPartition(
