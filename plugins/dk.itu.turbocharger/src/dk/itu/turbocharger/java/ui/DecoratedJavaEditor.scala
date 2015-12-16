@@ -3,6 +3,7 @@ package dk.itu.turbocharger.java.ui
 import dk.itu.coqoon.ui.{
   CoqGoalsContainer, CoqoonUIPreferences, ManifestIdentifiers}
 import dk.itu.coqoon.ui.pide.{Perspective, PIDESessionHost}
+import dk.itu.coqoon.ui.text.TokeniserPartitioner
 import dk.itu.turbocharger.java.{Partitioning, DecoratedJavaPartitioner}
 
 import org.eclipse.ui.editors.text.{
@@ -287,7 +288,7 @@ class DecoratedJavaEditor
     viewer
   }
 
-  protected[ui] var partitioner : Option[DecoratedJavaPartitioner] = None
+  protected[ui] var partitioner : Option[TokeniserPartitioner] = None
 
   import dk.itu.turbocharger.coq.PIDEDiff
   private[ui] lazy val differ = new PIDEDiff

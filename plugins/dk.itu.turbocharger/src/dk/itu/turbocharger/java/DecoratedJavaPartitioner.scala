@@ -3,9 +3,6 @@ package dk.itu.turbocharger.java
 import dk.itu.coqoon.ui.text.TokeniserPartitioner
 import org.eclipse.jface.text.{IDocument, IDocumentExtension3}
 
-class DecoratedJavaPartitioner extends TokeniserPartitioner(
-    DecoratedJavaTokeniser, JavaRecogniser.States.java,
-    DecoratedJavaPartitioner.mapping)
 object DecoratedJavaPartitioner {
   import dk.itu.coqoon.ui.text.coq.CoqRecogniser
   private[DecoratedJavaPartitioner] val mapping = {
@@ -35,5 +32,7 @@ object DecoratedJavaPartitioner {
     partitioner
   }
 
-  def createPartitioner() = new DecoratedJavaPartitioner
+  def createPartitioner() = new TokeniserPartitioner(
+    DecoratedJavaTokeniser, JavaRecogniser.States.java,
+    DecoratedJavaPartitioner.mapping)
 }
