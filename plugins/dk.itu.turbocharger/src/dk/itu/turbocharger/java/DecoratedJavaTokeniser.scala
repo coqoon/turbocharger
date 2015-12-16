@@ -4,7 +4,7 @@ import dk.itu.coqoon.ui.text.Tokeniser
 import dk.itu.coqoon.ui.text.PushdownAutomaton.{State, Transition}
 
 object DecoratedJavaTokeniser extends Tokeniser(DecoratedJavaRecogniser) {
-  import dk.itu.turbocharger.coq.{CoqTokeniser, CoqRecogniser}
+  import dk.itu.coqoon.ui.text.coq.{CoqTokeniser, CoqRecogniser}
   import CoqRecogniser.{States => Coq}
   import JavaRecogniser.{States => Java}
   import DecoratedJavaRecogniser.{States => DJ}

@@ -1,6 +1,7 @@
 package dk.itu.turbocharger.coq
 
 import dk.itu.coqoon.ui.text.Region
+import dk.itu.coqoon.ui.text.coq.CoqRecogniser
 import dk.itu.turbocharger.parsing.DecoratedDocument
 import org.eclipse.jdt.core.dom.MethodDeclaration
 

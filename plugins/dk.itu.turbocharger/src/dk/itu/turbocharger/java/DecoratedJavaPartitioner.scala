@@ -7,7 +7,7 @@ class DecoratedJavaPartitioner extends TokeniserPartitioner(
     DecoratedJavaTokeniser, JavaRecogniser.States.java,
     DecoratedJavaPartitioner.mapping)
 object DecoratedJavaPartitioner {
-  import dk.itu.turbocharger.coq.CoqRecogniser
+  import dk.itu.coqoon.ui.text.coq.CoqRecogniser
   private[DecoratedJavaPartitioner] val mapping = {
     import Partitioning._
     import CoqRecogniser.States._
