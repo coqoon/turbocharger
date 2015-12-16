@@ -1,7 +1,7 @@
 package dk.itu.turbocharger.java
 
-import dk.itu.turbocharger.parsing.Tokeniser
-import dk.itu.turbocharger.parsing.PushdownAutomaton.{State, Transition}
+import dk.itu.turbocharger.text.Tokeniser
+import dk.itu.turbocharger.text.PushdownAutomaton.{State, Transition}
 
 object DecoratedJavaTokeniser extends Tokeniser(DecoratedJavaRecogniser) {
   import dk.itu.turbocharger.coq.{CoqTokeniser, CoqRecogniser}

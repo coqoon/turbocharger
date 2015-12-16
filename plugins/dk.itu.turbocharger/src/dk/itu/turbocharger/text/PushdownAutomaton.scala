@@ -1,4 +1,4 @@
-package dk.itu.turbocharger.parsing
+package dk.itu.turbocharger.text
 
 class PushdownAutomaton[C] {
   def this(a : PushdownAutomaton[C]*) = {

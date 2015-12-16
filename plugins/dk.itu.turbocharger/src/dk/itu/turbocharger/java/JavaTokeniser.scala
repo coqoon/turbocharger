@@ -1,6 +1,6 @@
 package dk.itu.turbocharger.java
 
-import dk.itu.turbocharger.parsing.{Tokeniser, PushdownAutomaton}
+import dk.itu.turbocharger.text.{Tokeniser, PushdownAutomaton}
 
 object JavaRecogniser extends PushdownAutomaton[Char] {
   object States {

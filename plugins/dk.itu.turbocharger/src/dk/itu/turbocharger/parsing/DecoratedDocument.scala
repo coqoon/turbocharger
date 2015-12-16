@@ -85,6 +85,7 @@ class DecoratedDocument(
   def getTokensWithPositions() : Stream[(Int, Token)] = tokens
 }
 object DecoratedDocument {
+  import dk.itu.turbocharger.text.PushdownAutomaton
   type Token = (PushdownAutomaton.State, String)
   type Tokens = Seq[Token]
   case class Region(

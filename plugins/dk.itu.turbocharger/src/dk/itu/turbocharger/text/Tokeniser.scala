@@ -1,4 +1,4 @@
-package dk.itu.turbocharger.parsing
+package dk.itu.turbocharger.text
 
 class Tokeniser(val automaton : PushdownAutomaton[Char]) {
   import Tokeniser._

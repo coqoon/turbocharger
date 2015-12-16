@@ -3,8 +3,8 @@ package dk.itu.turbocharger.java
 import dk.itu.coqoon.core.utilities.CacheSlot
 import dk.itu.turbocharger.coq.CoqRecogniser.{States => CoqStates}
 import dk.itu.turbocharger.java.JavaRecogniser.{States => JavaStates}
-import dk.itu.turbocharger.parsing.{
-  Tokeniser, DecoratedDocument, PushdownAutomaton}
+import dk.itu.turbocharger.text.{Tokeniser, PushdownAutomaton}
+import dk.itu.turbocharger.parsing.DecoratedDocument
 import org.eclipse.core.resources.IFile
 
 class DecoratedJavaDocument(
