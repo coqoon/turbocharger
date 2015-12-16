@@ -1,9 +1,9 @@
 package dk.itu.turbocharger.java
 
+import dk.itu.coqoon.ui.text.{Region, Tokeniser, PushdownAutomaton}
 import dk.itu.coqoon.core.utilities.CacheSlot
 import dk.itu.turbocharger.coq.CoqRecogniser.{States => CoqStates}
 import dk.itu.turbocharger.java.JavaRecogniser.{States => JavaStates}
-import dk.itu.turbocharger.text.{Region, Tokeniser, PushdownAutomaton}
 import dk.itu.turbocharger.parsing.DecoratedDocument
 import org.eclipse.core.resources.IFile
 

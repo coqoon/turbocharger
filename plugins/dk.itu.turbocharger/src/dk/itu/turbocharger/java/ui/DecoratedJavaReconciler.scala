@@ -2,8 +2,8 @@ package dk.itu.turbocharger.java.ui
 
 import dk.itu.turbocharger.ManifestIdentifiers.Markers.JAVA_PROBLEM
 import dk.itu.coqoon.ui.EventReconciler
+import dk.itu.coqoon.ui.text.Region
 import dk.itu.turbocharger.java.DecoratedJavaDocument
-import dk.itu.turbocharger.text.Region
 import dk.itu.turbocharger.parsing.DecoratedDocument
 import org.eclipse.core.runtime.IProgressMonitor
 import org.eclipse.jface.text.{IRegion, IDocument}

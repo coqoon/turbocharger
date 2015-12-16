@@ -1,6 +1,6 @@
 package dk.itu.turbocharger.coq
 
-import dk.itu.turbocharger.text.{Tokeniser, PushdownAutomaton}
+import dk.itu.coqoon.ui.text.{Tokeniser, PushdownAutomaton}
 
 object CoqRecogniser extends PushdownAutomaton[Char] {
   import PushdownAutomaton.Element

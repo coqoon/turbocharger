@@ -1,7 +1,6 @@
 package dk.itu.turbocharger.coq
 
-import dk.itu.coqoon.core.coqtop.CoqSentence.getNextSentences
-import dk.itu.turbocharger.text.Region
+import dk.itu.coqoon.ui.text.Region
 import dk.itu.turbocharger.parsing.DecoratedDocument
 import org.eclipse.jdt.core.dom.MethodDeclaration
 

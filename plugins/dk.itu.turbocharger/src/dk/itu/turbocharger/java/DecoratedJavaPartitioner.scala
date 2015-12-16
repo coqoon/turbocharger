@@ -1,6 +1,6 @@
 package dk.itu.turbocharger.java
 
-import dk.itu.turbocharger.text.TokeniserPartitioner
+import dk.itu.coqoon.ui.text.TokeniserPartitioner
 import org.eclipse.jface.text.{IDocument, IDocumentExtension3}
 
 class DecoratedJavaPartitioner extends TokeniserPartitioner(

@@ -1,7 +1,7 @@
 package dk.itu.turbocharger.java
 
+import dk.itu.coqoon.ui.text.PushdownAutomaton
 import dk.itu.turbocharger.coq.CoqRecogniser
-import dk.itu.turbocharger.text.PushdownAutomaton
 
 object DecoratedJavaRecogniser
     extends PushdownAutomaton[Char](CoqRecogniser, JavaRecogniser) {

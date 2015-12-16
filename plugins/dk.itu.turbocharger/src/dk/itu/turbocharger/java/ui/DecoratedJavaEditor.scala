@@ -56,8 +56,8 @@ class DecoratedJavaEditor
   override protected[ui] def executeWithCommandsLock[A](f : => A) =
     super.executeWithCommandsLock(f)
 
+  import dk.itu.coqoon.ui.text.Region
   import dk.itu.turbocharger.coq.CoqCommand
-  import dk.itu.turbocharger.text.Region
   import dk.itu.turbocharger.parsing.DecoratedDocument
   /* Seq((position in the generated PIDE document, Option[(Coq command, region
    * in the complete document corresponding to the Coq command)])) */

@@ -3,7 +3,7 @@ package dk.itu.turbocharger.parsing
 class DecoratedDocument(
     private val _tokens : DecoratedDocument.Tokens) extends DecoratedDocument.View {
   import DecoratedDocument._
-  import dk.itu.turbocharger.text.Region
+  import dk.itu.coqoon.ui.text.Region
 
   lazy val tokens = withPositions(_tokens)
 
@@ -86,7 +86,7 @@ class DecoratedDocument(
   def getTokensWithPositions() : Stream[(Int, Token)] = tokens
 }
 object DecoratedDocument {
-  import dk.itu.turbocharger.text.PushdownAutomaton
+  import dk.itu.coqoon.ui.text.PushdownAutomaton
   type Token = (PushdownAutomaton.State, String)
   type Tokens = Seq[Token]
 
