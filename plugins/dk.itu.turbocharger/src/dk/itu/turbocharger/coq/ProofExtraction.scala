@@ -18,7 +18,8 @@ object ProofExtraction {
       method : MethodDeclaration, sr : Region, pr : Region,
       doc : DecoratedDocument, langView : DecoratedDocument#TypedView,
       coqView : DecoratedDocument#TypedView) = {
-    import dk.itu.turbocharger.java.{Partitioning, DecoratedJavaCoqDocument}
+    import dk.itu.turbocharger.java.{
+      DecoratedJavaPartitions, DecoratedJavaCoqDocument}
     import CoqRecogniser.States.{base => COQ}
     val pt =
       doc.getPartialTokens(sr) match {
@@ -32,16 +33,14 @@ object ProofExtraction {
       case Seq() =>
         (None, None)
       case tokens =>
-        import dk.itu.turbocharger.java.Partitioning
-
         val pre = tokens.collectFirst {
           case (o, (pt, a @ Precondition(leadin, body)))
-              if pt.label.startsWith(Partitioning.Coq.ContentTypes.COQ) =>
+              if pt.label.startsWith(DecoratedJavaPartitions.Types.COQ) =>
             (body, o + leadin.length)
         }
         val post = tokens.collectFirst {
           case (o, (pt, a @ Postcondition(leadin, body)))
-              if pt.label.startsWith(Partitioning.Coq.ContentTypes.COQ) =>
+              if pt.label.startsWith(DecoratedJavaPartitions.Types.COQ) =>
             (body, o + leadin.length)
         }
         (pre, post)

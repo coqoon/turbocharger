@@ -4,7 +4,7 @@ import dk.itu.coqoon.ui.{
   CoqGoalsContainer, CoqoonUIPreferences, ManifestIdentifiers}
 import dk.itu.coqoon.ui.pide.{Perspective, PIDESessionHost}
 import dk.itu.coqoon.ui.text.TokeniserPartitioner
-import dk.itu.turbocharger.java.{Partitioning, DecoratedJavaPartitioner}
+import dk.itu.turbocharger.java.DecoratedJavaPartitions
 
 import org.eclipse.ui.editors.text.{
   TextEditor, TextFileDocumentProvider, ForwardingDocumentProvider}
@@ -297,13 +297,13 @@ class DecoratedJavaEditor
       extends IDocumentSetupParticipant {
     import org.eclipse.jface.text.IDocument
     override def setup(doc : IDocument) =
-      partitioner =
-        Some(DecoratedJavaPartitioner.installPartitioner(doc, Partitioning.ID))
+      partitioner = Some(DecoratedJavaPartitions.installPartitioner(
+          doc, DecoratedJavaPartitions.ID))
   }
 
   override protected def initializeEditor() = {
     setDocumentProvider(new ForwardingDocumentProvider(
-      Partitioning.ID, DecoratedJavaDocumentSetupParticipant,
+      DecoratedJavaPartitions.ID, DecoratedJavaDocumentSetupParticipant,
       new TextFileDocumentProvider {
         override def getDefaultEncoding() = "UTF-8"
       }))
