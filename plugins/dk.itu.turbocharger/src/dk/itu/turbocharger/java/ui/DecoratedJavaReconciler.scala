@@ -4,7 +4,7 @@ import dk.itu.turbocharger.ManifestIdentifiers.Markers.JAVA_PROBLEM
 import dk.itu.coqoon.ui.EventReconciler
 import dk.itu.coqoon.ui.text.Region
 import dk.itu.turbocharger.java.DecoratedJavaDocument
-import dk.itu.turbocharger.parsing.DecoratedDocument
+import dk.itu.turbocharger.text.DecoratedDocument
 import org.eclipse.core.runtime.IProgressMonitor
 import org.eclipse.jface.text.{IRegion, IDocument}
 import org.eclipse.jdt.core.dom.{TypeDeclaration, CompilationUnit}

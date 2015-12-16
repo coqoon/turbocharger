@@ -1,4 +1,4 @@
-package dk.itu.turbocharger.parsing
+package dk.itu.turbocharger.text
 
 class DecoratedDocument(
     private val _tokens : DecoratedDocument.Tokens) extends DecoratedDocument.View {
