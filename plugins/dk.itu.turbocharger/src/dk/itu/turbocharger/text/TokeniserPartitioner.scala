@@ -7,7 +7,6 @@ import org.eclipse.jface.text.{DocumentEvent, IDocumentPartitioner,
   IDocumentPartitionerExtension3}
 
 import dk.itu.coqoon.core.utilities.CacheSlot
-import dk.itu.turbocharger.parsing.DecoratedDocument.Region
 
 private object DocumentAdapter {
   class DocumentSequence(

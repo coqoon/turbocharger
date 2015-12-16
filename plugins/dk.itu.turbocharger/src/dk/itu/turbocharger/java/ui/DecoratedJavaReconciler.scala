@@ -3,6 +3,7 @@ package dk.itu.turbocharger.java.ui
 import dk.itu.turbocharger.ManifestIdentifiers.Markers.JAVA_PROBLEM
 import dk.itu.coqoon.ui.EventReconciler
 import dk.itu.turbocharger.java.DecoratedJavaDocument
+import dk.itu.turbocharger.text.Region
 import dk.itu.turbocharger.parsing.DecoratedDocument
 import org.eclipse.core.runtime.IProgressMonitor
 import org.eclipse.jface.text.{IRegion, IDocument}
@@ -16,7 +17,6 @@ class DecoratedJavaReconciler(
   import org.eclipse.jdt.core.dom.{AST, Message, ASTParser}
 
   import EventReconciler.DecoratedEvent
-  import DecoratedDocument.Region
   override def reconcile(events : List[DecoratedEvent]) = {
     println(s"${this}.reconcile($events)")
     import dk.itu.coqoon.core.utilities.TryCast
@@ -78,7 +78,6 @@ class DecoratedJavaReconciler(
 object DecoratedJavaReconciler {
   import org.eclipse.jdt.core.dom.Message
   import org.eclipse.core.resources.{IFile, IMarker}
-  import DecoratedDocument.Region
   /* Creates one or more markers to represent an error message pertaining to a
    * particular region in a typed view. (If the given region crosses a type
    * boundary, more than one marker will be created.) */

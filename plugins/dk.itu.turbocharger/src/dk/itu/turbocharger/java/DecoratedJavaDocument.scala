@@ -3,7 +3,7 @@ package dk.itu.turbocharger.java
 import dk.itu.coqoon.core.utilities.CacheSlot
 import dk.itu.turbocharger.coq.CoqRecogniser.{States => CoqStates}
 import dk.itu.turbocharger.java.JavaRecogniser.{States => JavaStates}
-import dk.itu.turbocharger.text.{Tokeniser, PushdownAutomaton}
+import dk.itu.turbocharger.text.{Region, Tokeniser, PushdownAutomaton}
 import dk.itu.turbocharger.parsing.DecoratedDocument
 import org.eclipse.core.resources.IFile
 
@@ -31,7 +31,6 @@ import org.eclipse.jdt.core.dom.{ASTNode, ASTVisitor}
 
 object DecoratedJavaCoqDocument {
   import ASTUtilities.children
-  import DecoratedDocument.Region
   import dk.itu.coqoon.core.model.ICoqModel
   import dk.itu.coqoon.core.utilities.TryCast
   import dk.itu.turbocharger.coq._

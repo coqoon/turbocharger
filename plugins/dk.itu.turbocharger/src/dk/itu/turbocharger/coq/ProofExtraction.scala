@@ -1,9 +1,9 @@
 package dk.itu.turbocharger.coq
 
 import dk.itu.coqoon.core.coqtop.CoqSentence.getNextSentences
+import dk.itu.turbocharger.text.Region
 import dk.itu.turbocharger.parsing.DecoratedDocument
 import org.eclipse.jdt.core.dom.MethodDeclaration
-import DecoratedDocument.Region
 
 object ProofExtraction {
   private final val Precondition =
@@ -15,11 +15,8 @@ object ProofExtraction {
    * language-specific view of that document, and @coqView the Coq-specific
    * one. */
   def extractProof(
-      method : MethodDeclaration,
-      sr : DecoratedDocument.Region,
-      pr : DecoratedDocument.Region,
-      doc : DecoratedDocument,
-      langView : DecoratedDocument#TypedView,
+      method : MethodDeclaration, sr : Region, pr : Region,
+      doc : DecoratedDocument, langView : DecoratedDocument#TypedView,
       coqView : DecoratedDocument#TypedView) = {
     import dk.itu.turbocharger.java.{Partitioning, DecoratedJavaCoqDocument}
     import CoqRecogniser.States.{base => COQ}

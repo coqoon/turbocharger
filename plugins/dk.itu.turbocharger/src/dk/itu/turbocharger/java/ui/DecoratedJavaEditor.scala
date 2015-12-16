@@ -57,8 +57,8 @@ class DecoratedJavaEditor
     super.executeWithCommandsLock(f)
 
   import dk.itu.turbocharger.coq.CoqCommand
+  import dk.itu.turbocharger.text.Region
   import dk.itu.turbocharger.parsing.DecoratedDocument
-  import dk.itu.turbocharger.parsing.DecoratedDocument.Region
   /* Seq((position in the generated PIDE document, Option[(Coq command, region
    * in the complete document corresponding to the Coq command)])) */
   private[ui] var pideDocument :

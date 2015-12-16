@@ -1,7 +1,5 @@
 package dk.itu.turbocharger.coq
 
-import dk.itu.turbocharger.parsing.DecoratedDocument.Region
-
 trait CoqThing {
   override def toString() : String
 }
