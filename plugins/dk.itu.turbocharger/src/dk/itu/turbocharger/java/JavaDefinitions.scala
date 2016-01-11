@@ -279,26 +279,23 @@ object JavaDefinitions {
       left : ASTNode, right : Expression) : cmd_j = {
     val (lhs, rhs) = (expandNameLike(left), expandNameLike(right))
     (lhs, rhs) match {
-      case ((lq :: ls :: rest), _)
-          if rest != Nil =>
+      case ((lq :: ls :: Nil), (rs :: Nil)) => /* local variable to field */
+        cwrite(lq, ls, E_var(rs))
+      case ((ls :: Nil), (rs :: Nil)) => /* local variable to local variable */
+        cassign(ls, E_var(rs))
+      case ((ls :: Nil), (rs :: rq :: Nil)) => /* field to local variable */
+        cread(ls, rs, rq)
+      case ((ls :: Nil), (Nil)) => /* something else to local variable */
+        handleLocalAssignment(ls, right)
+      case ((lq :: ls :: rest), _) =>
         throw UnsupportedException(left,
             "The left hand side of this assignment is too deeply qualified")
-      case (_, (rq :: rs :: rest))
-          if rest != Nil =>
+      case (_, (rq :: rs :: rest)) =>
         throw UnsupportedException(right,
             "The right hand side of this assignment is too deeply qualified")
-      case ((ls :: lq), (rs :: rq))
-          if lq != Nil && rq != Nil =>
+      case ((ls :: lq), (rs :: rq)) =>
         throw UnsupportedException(left.getParent,
             "Assigning from one field directly to another is not supported")
-      case ((lq :: ls :: Nil), (rs :: Nil)) =>
-        cwrite(lq, ls, E_var(rs))
-      case ((ls :: Nil), (rs :: Nil)) =>
-        cassign(ls, E_var(rs))
-      case ((ls :: Nil), (rs :: rq :: Nil)) =>
-        cread(ls, rs, rq)
-      case ((ls :: Nil), (Nil)) =>
-        handleLocalAssignment(ls, right)
       case _ =>
         println("???", left, lhs, right, rhs)
         throw UnsupportedException(left.getParent,
