@@ -171,7 +171,7 @@ object JavaDefinitions {
           "Expressions of this form are not supported")
   }
 
-  def handleExpressionStatement(e : Expression) : cmd_j =
+  private def handleExpressionStatement(e : Expression) : cmd_j =
     e match {
       case v : VariableDeclarationExpression =>
         import scala.collection.JavaConversions._
@@ -226,7 +226,7 @@ object JavaDefinitions {
             "Expression statements of this form are not supported")
     }
 
-  def handleAssignment(a : Assignment) : cmd_j = {
+  private def handleAssignment(a : Assignment) : cmd_j = {
     import Assignment.Operator._
     val leftName = expandNameLike(a.getLeftHandSide)
     (leftName, a.getOperator, a.getRightHandSide) match {
@@ -253,12 +253,12 @@ object JavaDefinitions {
     }
   }
 
-  def handleLocalFragments(
+  private def handleLocalFragments(
       fragments : List[VariableDeclarationFragment]) : List[cmd_j] =
     for (f <- fragments)
       yield handlePotentialFieldAssignment(f.getName, f.getInitializer)
 
-  def handlePotentialFieldAssignment(
+  private def handlePotentialFieldAssignment(
       left : ASTNode, right : Expression) : cmd_j = {
     val (lhs, rhs) = (expandNameLike(left), expandNameLike(right))
     (lhs, rhs) match {
@@ -286,7 +286,7 @@ object JavaDefinitions {
     }
   }
 
-  def handleLocalAssignment(n : String, e : Expression) : cmd_j = {
+  private def handleLocalAssignment(n : String, e : Expression) : cmd_j = {
     Option(e) match {
       case Some(c : ClassInstanceCreation)
           if c.getType.isSimpleType =>
@@ -335,11 +335,7 @@ object JavaDefinitions {
     }
   }
 
-  def binding(n : Name) = Option(n.resolveBinding)
-  def methodBinding(n : Name) = binding(n).flatMap(TryCast[IMethodBinding])
-  def variableBinding(n : Name) = binding(n).flatMap(TryCast[IVariableBinding])
-
-  def expandNameLike(n : ASTNode) : List[String] = n match {
+  private def expandNameLike(n : ASTNode) : List[String] = n match {
     case sn : SimpleName
         if variableBinding(sn).exists(_.isField) =>
       List("this", sn.getIdentifier)
@@ -354,6 +350,10 @@ object JavaDefinitions {
     case _ =>
       List()
   }
+
+  def binding(n : Name) = Option(n.resolveBinding)
+  def methodBinding(n : Name) = binding(n).flatMap(TryCast[IMethodBinding])
+  def variableBinding(n : Name) = binding(n).flatMap(TryCast[IVariableBinding])
 
   class UnsupportedException(
       val node : ASTNode, val message : String) extends Exception(message)
