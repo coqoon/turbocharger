@@ -5,17 +5,6 @@ object JavaDefinitions {
   import dk.itu.coqoon.core.utilities.TryCast
   import org.eclipse.jdt.core.dom._
 
-  def getParts(n : Name) = {
-    val t = n match {
-      case s : SimpleName =>
-        ("this", s.getIdentifier)
-      case q : QualifiedName =>
-        (q.getQualifier.getFullyQualifiedName.toString,
-            q.getName.getIdentifier)
-    }
-    (t._1, t._2, variableBinding(n))
-  }
-
   import cmd_j._
   import val_j._
   import dexpr_j._
@@ -197,7 +186,8 @@ object JavaDefinitions {
         import PostfixExpression.Operator._
         (a.getOperand, a.getOperator) match {
           case (n : Name, op @ (DECREMENT | INCREMENT)) =>
-            val (qualPart, simplePart, binding) = getParts(n)
+            val binding = variableBinding(n)
+            val (_ :+ simplePart) = expandNameLike(n)
             val exprv = (op, binding) match {
               case (DECREMENT, Some(binding)) if !binding.isField =>
                 E_minus(E_var(simplePart), E_val(vint(1)))
@@ -205,7 +195,7 @@ object JavaDefinitions {
                 E_plus(E_var(simplePart), E_val(vint(1)))
               case (_, None) =>
                 throw UnsupportedException(n,
-                    "This name does not refer to a variable in scope")
+                    "This name does not refer to a local variable in scope")
             }
             if (binding.exists(!_.isField)) {
               cassign(simplePart, exprv)
@@ -219,7 +209,8 @@ object JavaDefinitions {
         import PrefixExpression.Operator._
         (a.getOperator, a.getOperand) match {
           case (op @ (DECREMENT | INCREMENT), n : Name) =>
-            val (qualPart, simplePart, binding) = getParts(n)
+            val binding = variableBinding(n)
+            val (_ :+ simplePart) = expandNameLike(n)
             val exprv = (op, binding) match {
               case (DECREMENT, Some(binding)) if !binding.isField =>
                 E_minus(E_var(simplePart), E_val(vint(1)))
@@ -227,7 +218,7 @@ object JavaDefinitions {
                 E_plus(E_var(simplePart), E_val(vint(1)))
               case (_, None) =>
                 throw UnsupportedException(n,
-                    "This name does not refer to a variable in scope")
+                    "This name does not refer to a local variable in scope")
             }
             if (binding.exists(!_.isField)) {
               cassign(simplePart, exprv)
