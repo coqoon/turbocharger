@@ -188,19 +188,15 @@ object JavaDefinitions {
           case (n : Name, op @ (DECREMENT | INCREMENT)) =>
             val binding = variableBinding(n)
             val (_ :+ simplePart) = expandNameLike(n)
-            val exprv = (op, binding) match {
-              case (DECREMENT, Some(binding)) if !binding.isField =>
-                E_minus(E_var(simplePart), E_val(vint(1)))
-              case (INCREMENT, Some(binding)) if !binding.isField =>
-                E_plus(E_var(simplePart), E_val(vint(1)))
-              case (_, None) =>
-                throw UnsupportedException(n,
-                    "This name does not refer to a local variable in scope")
-            }
             if (binding.exists(!_.isField)) {
-              cassign(simplePart, exprv)
+              cassign(simplePart, op match {
+                case DECREMENT =>
+                  E_minus(E_var(simplePart), E_val(vint(1)))
+                case INCREMENT =>
+                  E_plus(E_var(simplePart), E_val(vint(1)))
+              })
             } else throw UnsupportedException(n,
-                "Only local variables can appear in expressions")
+                "This name does not refer to a local variable in scope")
           case (q, _) =>
             throw UnsupportedException(a,
                 "Postfix expression statements of this form are not supported")
@@ -211,19 +207,15 @@ object JavaDefinitions {
           case (op @ (DECREMENT | INCREMENT), n : Name) =>
             val binding = variableBinding(n)
             val (_ :+ simplePart) = expandNameLike(n)
-            val exprv = (op, binding) match {
-              case (DECREMENT, Some(binding)) if !binding.isField =>
-                E_minus(E_var(simplePart), E_val(vint(1)))
-              case (INCREMENT, Some(binding)) if !binding.isField =>
-                E_plus(E_var(simplePart), E_val(vint(1)))
-              case (_, None) =>
-                throw UnsupportedException(n,
-                    "This name does not refer to a local variable in scope")
-            }
             if (binding.exists(!_.isField)) {
-              cassign(simplePart, exprv)
+              cassign(simplePart, op match {
+                case DECREMENT =>
+                  E_minus(E_var(simplePart), E_val(vint(1)))
+                case INCREMENT =>
+                  E_plus(E_var(simplePart), E_val(vint(1)))
+              })
             } else throw UnsupportedException(n,
-                "Only local variables can appear in expressions")
+                "This name does not refer to a local variable in scope")
           case (_, q) =>
             throw UnsupportedException(a,
                 "Prefix expression statements of this form are not supported")
