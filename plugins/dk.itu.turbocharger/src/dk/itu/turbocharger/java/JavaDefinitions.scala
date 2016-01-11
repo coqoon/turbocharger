@@ -67,8 +67,9 @@ object JavaDefinitions {
         case (v : VariableDeclarationExpression) :: Nil =>
           result ++= handleLocalFragments(v.fragments.flatMap(
               TryCast[VariableDeclarationFragment]).toList)
-        case f if f.forall(_.isInstanceOf[Assignment]) =>
-          result ++= f.map(a => handleAssignment(a.asInstanceOf[Assignment]))
+        case f =>
+          result ++=
+            f.flatMap(TryCast[Expression]).map(handleExpressionStatement)
       }
       val updaters = f.updaters.flatMap(
           TryCast[Expression]).map(handleExpressionStatement).toList
