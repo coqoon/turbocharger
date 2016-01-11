@@ -13,22 +13,21 @@ object JavaDefinitions {
     /* Constructors don't technically return anything */
     if (m.isConstructor)
       return E_val(nothing)
-    import scala.collection.JavaConversions._
     m.getReturnType2 match {
       case p : PrimitiveType
           if p.getPrimitiveTypeCode == PrimitiveType.VOID =>
         E_val(nothing)
       case t =>
-        var expr : Option[(ReturnStatement, dexpr_j)] = None
+        var rs : Option[ReturnStatement] = None
         m.accept(new ASTVisitor {
-          override def preVisit(n : ASTNode) = expr.foreach(e =>
-            throw UnsupportedException(e._1,
+          override def preVisit(n : ASTNode) = rs.foreach(e =>
+            throw UnsupportedException(e,
                 "Early return from a method is not supported"))
           override def visit(r : ReturnStatement) = {
             val parent = Option(r.getParent)
             (parent, parent.map(_.getParent)) match {
               case (Some(b : Block), Some(m : MethodDeclaration)) =>
-                expr = Some((r, evisitor(r.getExpression)))
+                rs = Some(r)
               case _ =>
                 throw UnsupportedException(r,
                     "Conditional or otherwise nested returns are not " +
@@ -37,9 +36,9 @@ object JavaDefinitions {
             false
           }
         })
-        expr match {
-          case Some((_, e)) =>
-            e
+        rs match {
+          case Some(r) =>
+            evisitor(r.getExpression)
           case None =>
             throw UnsupportedException(m,
                 "Non-void methods must end with a return statement")
