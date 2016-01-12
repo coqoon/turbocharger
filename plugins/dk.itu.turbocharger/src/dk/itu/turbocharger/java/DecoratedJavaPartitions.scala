@@ -18,14 +18,14 @@ object DecoratedJavaPartitions {
   private[DecoratedJavaPartitions] lazy val mapping = {
     import CoqRecogniser.States._
     import JavaRecogniser.States._
-    Map(java -> (Types.JAVA, false),
-        javaChar -> (Types.JAVA_CHAR, true),
-        javaString -> (Types.JAVA_STRING, true),
-        javaMultiLineComment -> (Types.JAVA_COMMENT, true),
-        javaSingleLineComment -> (Types.JAVA_COMMENT, true),
-        coq -> (Types.COQ, false) /* "false" isn't precisely correct... */,
-        coqString -> (Types.COQ_STRING, true),
-        coqComment -> (Types.COQ_COMMENT, true))
+    Map(java -> (Types.JAVA, 0),
+        javaChar -> (Types.JAVA_CHAR, 1),
+        javaString -> (Types.JAVA_STRING, 1),
+        javaMultiLineComment -> (Types.JAVA_COMMENT, 2),
+        javaSingleLineComment -> (Types.JAVA_COMMENT, 2),
+        coq -> (Types.COQ, 0) /* This isn't precisely true... */,
+        coqString -> (Types.COQ_STRING, 1),
+        coqComment -> (Types.COQ_COMMENT, 2))
   }
 
   import org.eclipse.jface.text.{IDocument, IDocumentExtension3}
