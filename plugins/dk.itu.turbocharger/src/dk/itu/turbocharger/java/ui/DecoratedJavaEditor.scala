@@ -156,22 +156,34 @@ class DecoratedJavaEditor
                   markup.map(_._2.markup).iterator).is_running)
 
             /* Extract and display error messages */
+            import dk.itu.coqoon.ui.utilities.EclipseConsole
             var commandHasErrors = false
             for ((_, tree) <- results) {
               (getFile, Responses.extractError(tree), posMap) match {
                 case (Some(f), Some((id, msg, Some(start), Some(end))),
                       Some(map)) =>
                   val r = Region(start - 1, length = (end - start))
-                  for ((region, po) <- map;
-                       f <- region.intersection(r);
-                       nr = f.translate(po - region.start)) {
-                    errorsToAdd :+= (command, (nr.start, nr.end), msg)
-                  }
+                  val errors =
+                    for ((region, po) <- map;
+                         f <- region.intersection(r);
+                         nr = f.translate(po - region.start))
+                      yield (command, (nr.start, nr.end), msg)
+                  if (!errors.isEmpty) {
+                    errorsToAdd ++= errors
+                  } else EclipseConsole.err.println(
+                      s"""Error for unmapped command "${command.source}", """ +
+                      s"characters ${r.start} to ${r.end}: ${msg}")
                   commandHasErrors = true
                 case (Some(f), Some((id, msg, _, _)), Some(map)) =>
-                  for ((region, po) <- map;
-                       nr = region.move(po))
-                    errorsToAdd :+= (command, (nr.start, nr.end), msg)
+                  val errors =
+                    for ((region, po) <- map;
+                         nr = region.move(po))
+                      yield (command, (nr.start, nr.end), msg)
+                  if (!errors.isEmpty) {
+                    errorsToAdd ++= errors
+                  } else EclipseConsole.err.println(
+                      s"""Error for unmapped command "${command.source}": """ +
+                      msg)
                   commandHasErrors = true
                 case _ =>
               }
