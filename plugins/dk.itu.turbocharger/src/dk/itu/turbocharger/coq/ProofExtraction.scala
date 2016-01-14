@@ -18,6 +18,7 @@ object ProofExtraction {
       method : MethodDeclaration, sr : Region, pr : Region,
       doc : DecoratedDocument, langView : DecoratedDocument#TypedView,
       coqView : DecoratedDocument#TypedView) = {
+    import dk.itu.coqoon.ui.text.coq.CoqRecogniser.{States => CoqStates}
     import dk.itu.turbocharger.java.{
       DecoratedJavaPartitions, DecoratedJavaCoqDocument}
     import CoqRecogniser.States.{base => COQ}
@@ -35,12 +36,12 @@ object ProofExtraction {
       case tokens =>
         val pre = tokens.collectFirst {
           case (o, (pt, a @ Precondition(leadin, body)))
-              if pt.label.startsWith(DecoratedJavaPartitions.Types.COQ) =>
+              if pt.label.startsWith(CoqStates.base) =>
             (body, o + leadin.length)
         }
         val post = tokens.collectFirst {
           case (o, (pt, a @ Postcondition(leadin, body)))
-              if pt.label.startsWith(DecoratedJavaPartitions.Types.COQ) =>
+              if pt.label.startsWith(CoqStates.base) =>
             (body, o + leadin.length)
         }
         (pre, post)
