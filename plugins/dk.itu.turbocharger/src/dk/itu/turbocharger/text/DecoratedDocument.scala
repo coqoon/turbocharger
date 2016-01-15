@@ -1,7 +1,9 @@
 package dk.itu.turbocharger.text
 
+import DecoratedDocument.Token
+
 class DecoratedDocument(
-    private val _tokens : DecoratedDocument.Tokens) extends DecoratedDocument.View {
+    private val _tokens : Seq[Token]) extends DecoratedDocument.View {
   import DecoratedDocument._
   import dk.itu.coqoon.ui.text.Region
 
@@ -51,9 +53,9 @@ class DecoratedDocument(
 
   /* If there are any tokens completely contained within @viewRegion, then
    * return them, along with the document-relative offset of the first one. */
-  def getTokens(region : Region) : Option[(Int, Tokens)] = {
+  def getTokens(region : Region) : Option[(Int, Seq[Token])] = {
     var initialPosition : Option[Int] = None
-    var result : Tokens = Seq()
+    var result : Seq[Token] = Seq()
     for ((pos, q @ (t, s)) <- getTokensWithPositions) {
       val tokenRegion = Region(pos, length = s.length)
       if (region.contains(tokenRegion)) {
@@ -68,9 +70,9 @@ class DecoratedDocument(
   /* If there are any tokens partly contained within @viewRegion, then
    * return them, along with the document-relative offset of the first token
    * fragment. */
-  def getPartialTokens(region : Region) : Option[(Int, Tokens)] = {
+  def getPartialTokens(region : Region) : Option[(Int, Seq[Token])] = {
     var initialPosition : Option[Int] = None
-    var result : Tokens = Seq()
+    var result : Seq[Token] = Seq()
     for ((pos, (t, s)) <- getTokensWithPositions) {
       val tokenRegion = Region(pos, length = s.length)
       region.intersection(tokenRegion).foreach(intersection => {
@@ -88,16 +90,15 @@ class DecoratedDocument(
 object DecoratedDocument {
   import dk.itu.coqoon.ui.text.PushdownAutomaton
   type Token = (PushdownAutomaton.State, String)
-  type Tokens = Seq[Token]
 
   trait View {
     def get() : String = getTokens.flatMap(_._2).mkString
     def contains(token : Token) : Boolean = getTokens.contains(token)
-    def getTokens() : Tokens
+    def getTokens() : Seq[Token]
   }
 
-  def withPositions(ts : Tokens) : Stream[(Int, Token)] = withPositions(0, ts)
-  def withPositions(start : Int, ts : Tokens) : Stream[(Int, Token)] =
+  def withPositions(ts : Seq[Token]) : Stream[(Int, Token)] = withPositions(0, ts)
+  def withPositions(start : Int, ts : Seq[Token]) : Stream[(Int, Token)] =
     withPositions[Token](_._2.length)(start, ts.toStream)
   def withPositions[A](length : A => Int)(
       start : Int, ts : Stream[A]) : Stream[(Int, A)] = {
