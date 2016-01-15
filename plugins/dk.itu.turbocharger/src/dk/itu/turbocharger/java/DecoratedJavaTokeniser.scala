@@ -22,11 +22,8 @@ object DecoratedJavaTokeniser extends Tokeniser(DecoratedJavaRecogniser) {
   def main(args : Array[String]) = {
     var line : Option[String] = None
     do {
-      line.foreach(tokenise(_).foreach(println))
+      line.foreach(tokens(Java.java, _).foreach(println))
       line = Some(readLine.trim).filter(_.length != 0)
     } while (line != None)
   }
-
-  def tokenise(input : String, start : State = Java.java) =
-    tokens(start, input)
 }
