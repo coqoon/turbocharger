@@ -31,14 +31,14 @@ import org.eclipse.jdt.core.dom.{ASTNode, ASTVisitor}
 
 object DecoratedJavaCoqDocument {
   import ASTUtilities.children
+  import dk.itu.coqoon.ui.text.Tokeniser.Token
   import dk.itu.coqoon.core.model.ICoqModel
   import dk.itu.coqoon.core.utilities.TryCast
   import dk.itu.turbocharger.coq._
   import dk.itu.turbocharger.coq.Charge._
   import org.eclipse.jdt.core.dom.TypeDeclaration
 
-  def simplify(prefix : String, f : Seq[(Int, DecoratedDocument.Token)]) :
-      Seq[(Int, DecoratedDocument.Token)] = {
+  def simplify(prefix : String, f : Seq[(Int, Token)]) : Seq[(Int, Token)] = {
     f match {
       case (l1 @ (s, (k, c1))) +:
            (l2 @ (_, (l, c2))) +: tail

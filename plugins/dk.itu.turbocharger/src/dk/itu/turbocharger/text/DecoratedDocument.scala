@@ -1,6 +1,6 @@
 package dk.itu.turbocharger.text
 
-import DecoratedDocument.Token
+import dk.itu.coqoon.ui.text.Tokeniser.Token
 
 class DecoratedDocument(
     private val _tokens : Seq[Token]) extends DecoratedDocument.View {
@@ -88,9 +88,6 @@ class DecoratedDocument(
   def getTokensWithPositions() : Stream[(Int, Token)] = tokens
 }
 object DecoratedDocument {
-  import dk.itu.coqoon.ui.text.PushdownAutomaton
-  type Token = (PushdownAutomaton.State, String)
-
   trait View {
     def get() : String = getTokens.flatMap(_._2).mkString
     def contains(token : Token) : Boolean = getTokens.contains(token)
