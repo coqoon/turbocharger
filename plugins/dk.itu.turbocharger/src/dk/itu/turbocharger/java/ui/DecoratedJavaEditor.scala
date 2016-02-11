@@ -12,11 +12,6 @@ import org.eclipse.core.filebuffers.IDocumentSetupParticipant
 
 class DecoratedJavaEditor
     extends TextEditor with CoqGoalsContainer with PIDESessionHost {
-  private[ui] def getLastSnapshot() =
-    executeWithCommandsLock {
-      lastSnapshot
-    }
-
   protected def createSourceViewerConfiguration() =
     new DecoratedJavaEditorSourceViewerConfiguration(this)
 
@@ -57,10 +52,6 @@ class DecoratedJavaEditor
   /* ... apart from the trailing ".v", required by Coq */
   override protected[ui] def getNodeName() =
     getFile.map(file => Document.Node.Name(file.getName + ".v"))
-
-  /* XXX: exposing this lock to the reconciler can't possibly be a good idea */
-  override protected[ui] def executeWithCommandsLock[A](f : => A) =
-    super.executeWithCommandsLock(f)
 
   import dk.itu.coqoon.ui.text.Region
   import dk.itu.turbocharger.coq.CoqCommand

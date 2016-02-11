@@ -36,15 +36,17 @@ class DecoratedJavaReconciler(
             case e : UnsupportedException =>
               Left(e)
           }
-        editor.executeWithCommandsLock {
-          import dk.itu.turbocharger.coq.CoqCommand
-          val d = pideDoc.right.toOption.getOrElse(Seq())
-          /* Before you ask, the + 1 is for the line separator that appears in
-           * the generated PIDE document. Yes, I hate it too */
-          editor.pideDocument =
-            DecoratedDocument.withPositions[(CoqCommand, Map[Region, Int])](
-                _._1.toString.trim.length + 1)(0, d.toStream)
-        }
+
+        /* XXX: this used to be synchronised on the commands lock; should we
+         * synchronise on something else now that the lock is hidden? */
+        import dk.itu.turbocharger.coq.CoqCommand
+        val d = pideDoc.right.toOption.getOrElse(Seq())
+        /* Before you ask, the + 1 is for the line separator that appears in
+         * the generated PIDE document. Yes, I hate it too */
+        editor.pideDocument =
+          DecoratedDocument.withPositions[(CoqCommand, Map[Region, Int])](
+              _._1.toString.trim.length + 1)(0, d.toStream)
+
         val syntheticMessages = pideDoc.left.toOption.map(e => new Message(
             s"${e.node.getClass.getSimpleName}: ${e.message}",
             e.node.getStartPosition, e.node.getLength)).toSeq
