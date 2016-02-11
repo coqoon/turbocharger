@@ -17,7 +17,7 @@ class DecoratedJavaReconciler(
   import org.eclipse.jdt.core.dom.{AST, Message, ASTParser}
 
   import EventReconciler.DecoratedEvent
-  override def reconcile(events : List[DecoratedEvent]) = {
+  override def process(events : List[DecoratedEvent]) = {
     println(s"${this}.reconcile($events)")
     import dk.itu.coqoon.core.utilities.TryCast
     import org.eclipse.ui.part.FileEditorInput

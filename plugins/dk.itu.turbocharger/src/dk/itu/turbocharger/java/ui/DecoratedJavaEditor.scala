@@ -12,6 +12,11 @@ import org.eclipse.core.filebuffers.IDocumentSetupParticipant
 
 class DecoratedJavaEditor
     extends TextEditor with CoqGoalsContainer with PIDESessionHost {
+  private[ui] def getLastSnapshot() =
+    executeWithCommandsLock {
+      lastSnapshot
+    }
+
   protected def createSourceViewerConfiguration() =
     new DecoratedJavaEditorSourceViewerConfiguration(this)
 
@@ -72,16 +77,16 @@ class DecoratedJavaEditor
   import dk.itu.coqoon.ui.utilities.UIUtils.asyncExec
   private def caretPing() =
     asyncExec {
+      val ls = getLastSnapshot
       val caret = Option(getViewer).map(_.getTextWidget).filter(
           text => !text.isDisposed).map(_.getCaretOffset)
-      val commandResultsAndMarkup = caret.flatMap(caret =>
-        executeWithCommandsLock {
-          val c = findCommand(caret)
-          lastSnapshot.flatMap(snapshot => c.map(
-              c => (c,
-                  Responses.extractResults(snapshot, c._2),
-                  Responses.extractMarkup(snapshot, c._2))))
-        })
+      val commandResultsAndMarkup = caret.flatMap(caret => {
+        val c = findCommand(caret)
+        ls.flatMap(snapshot => c.map(
+            c => (c,
+                Responses.extractResults(snapshot, c._2),
+                Responses.extractMarkup(snapshot, c._2))))
+      })
       commandResultsAndMarkup match {
         case Some(((offset, command), results, markup)) =>
           val sameCommand = lastCommand.contains(command)
@@ -115,36 +120,27 @@ class DecoratedJavaEditor
 
   override protected def commandsUpdated(changed : Seq[Command]) = {
     import dk.itu.coqoon.ui.pide.Responses
-    val changedResultsAndMarkup =
-      (executeWithCommandsLock {
-        val ls = lastSnapshot.get
-        lastSnapshot.foreach(snapshot =>
-            commands =
-              (for (command <- snapshot.node.commands;
-                    offset <- snapshot.node.command_start(command))
-                yield (offset, command)).toSeq)
-        for (c <- changed)
-          yield {
-            (ls.node.command_start(c), c,
-                Responses.extractResults(ls, c),
-                Responses.extractMarkup(ls, c))
-          }
-      })
+    val ls = getLastSnapshot.get
+    val changedResultsAndMarkup = ({
+      for (c <- changed)
+        yield {
+          Some(ls.node.command_start(c), c,
+              Responses.extractResults(ls, c),
+              Responses.extractMarkup(ls, c))
+        }
+      }).flatten
 
     asyncExec {
-      val am =
-        if (CoqoonUIPreferences.ProcessingAnnotations.get) {
-          getAnnotationModel
-        } else None
-      am.foreach(
-          model => Option(getViewer).map(_.getDocument).foreach(model.connect))
-
       import org.eclipse.jface.text.Position
       var toDelete : Seq[(Command, Seq[Annotation])] = Seq()
       var annotationsToAdd : Seq[(Command, Seq[(Annotation, Position)])] = Seq()
       var errorsToAdd : Seq[(Command, (Int, Int), String)] = Seq()
       var errorsToDelete : Seq[Command] = Seq()
 
+      val am =
+        if (CoqoonUIPreferences.ProcessingAnnotations.get) {
+          getAnnotationModel
+        } else None
       try {
         for (i <- changedResultsAndMarkup) i match {
           case (Some(offset), command, results, markup) =>
@@ -213,31 +209,28 @@ class DecoratedJavaEditor
             toDelete :+= (command, annotations.get(command).toSeq.flatten)
         }
       } finally {
-        am.foreach(model => {
-          import scala.collection.JavaConversions._
-          val del =
-            (for ((command, ans) <- toDelete)
-              yield {
-                annotations -= command
-                ans
-              }).flatten
-          val add =
-            (for ((command, ans) <- annotationsToAdd)
-              yield {
-                annotations += (command -> ans.map(_._1))
-                ans
-              }).flatten.toMap
-          model.replaceAnnotations(del.toArray, add)
+        import scala.collection.JavaConversions._
+        val del =
+          (for ((command, ans) <- toDelete)
+            yield {
+              annotations -= command
+              ans
+            }).flatten
+        val add =
+          (for ((command, ans) <- annotationsToAdd)
+            yield {
+              annotations += (command -> ans.map(_._1))
+              ans
+            }).flatten.toMap
 
-          model.disconnect(getViewer.getDocument)
-          getSourceViewer.invalidateTextPresentation
-        })
+        if (!del.isEmpty || !add.isEmpty)
+          am.foreach(_.replaceAnnotations(del.toArray, add))
 
         if (!toDelete.isEmpty || !errorsToAdd.isEmpty ||
             !errorsToDelete.isEmpty)
           getFile.foreach(file =>
             new dk.itu.coqoon.ui.pide.UpdateErrorsJob(file,
-                commands,
+                ls.node.commands,
                 toDelete.map(_._1) ++ errorsToDelete,
                 errorsToAdd).schedule)
       }
