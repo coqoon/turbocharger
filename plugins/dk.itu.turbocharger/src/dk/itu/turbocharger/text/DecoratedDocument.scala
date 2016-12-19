@@ -17,17 +17,22 @@ class DecoratedDocument(
 
     override def contains(token : Token) = token._1.label.startsWith(prefix)
     def toDocumentOffset(offset : Int) : Option[Int] = {
-      var viewPos = 0
-      for ((realPos, q @ (t, s)) <-
+      var (viewOff, docOff) = (0, 0)
+      for ((realOff, q @ (t, s)) <-
           DecoratedDocument.this.getTokensWithPositions) {
         if (contains(q)) {
-          val viewEnd = (viewPos + s.length)
-          if (offset >= viewPos && offset < viewEnd) {
-            return Some(realPos + (offset - viewPos))
-          } else viewPos = viewEnd
+          val viewEnd = (viewOff + s.length)
+          if (offset >= viewOff && offset < viewEnd) {
+            return Some(realOff + (offset - viewOff))
+          } else {
+            docOff = realOff + s.length
+            viewOff = viewEnd
+          }
         }
       }
-      None
+      if (offset != viewOff) {
+        None
+      } else Some(docOff)
     }
     def toDocumentRegions(viewRegion : Region) : Seq[Region] = {
       val r = (toDocumentOffset(viewRegion.start),
