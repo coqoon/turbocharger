@@ -35,7 +35,7 @@ class DecoratedJavaEditor
 
   import isabelle.{Text, Command, Session, Protocol, Document}
 
-  import dk.itu.coqoon.ui.utilities.SupersedableTask
+  import dk.itu.coqoon.core.utilities.SupersedableTask
   val uiMoveTask = new SupersedableTask(200)
 
   import org.eclipse.swt.custom.{CaretEvent, CaretListener}
