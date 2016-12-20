@@ -37,5 +37,97 @@
             type="org.eclipse.core.resources.problemmarker">
       </super>
    </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            id="dk.itu.turbocharger:commands"
+            name="Turbocharger">
+      </category>
+      <command
+            categoryId="dk.itu.turbocharger:commands"
+            description="Add Coq support to a Java project"
+            id="dk.itu.turbocharger:command.enable"
+            name="Enable Coq integration">
+      </command>
+      <command
+            categoryId="dk.itu.turbocharger:commands"
+            description="Remove Coq support from a Java project"
+            id="dk.itu.turbocharger:command.disable"
+            name="Disable Coq integration">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="true"
+            locationURI="popup:org.eclipse.ui.navigator.ProjectExplorer#PopupMenu?after=additions">
+         <menu
+               label="Turbocharger">
+            <command
+                  commandId="dk.itu.turbocharger:command.enable"
+                  icon="platform:/plugin/org.eclipse.ui/icons/full/obj16/add_obj.gif"
+                  label="Enable Coq integration"
+                  style="push">
+               <visibleWhen
+                     checkEnabled="true">
+                  <iterate
+                        operator="and">
+                     <adapt
+                           type="org.eclipse.core.resources.IProject">
+                        <and>
+                           <not>
+                              <test
+                                    property="org.eclipse.core.resources.projectNature"
+                                    value="dk.itu.sdg.kopitiam.CoqNature">
+                              </test>
+                           </not>
+                           <test
+                                 property="org.eclipse.core.resources.projectNature"
+                                 value="org.eclipse.jdt.core.javanature">
+                           </test>
+                        </and>
+                     </adapt>
+                  </iterate>
+               </visibleWhen>
+            </command>
+            <command
+                  commandId="dk.itu.turbocharger:command.disable"
+                  icon="platform:/plugin/org.eclipse.ui/icons/full/obj16/delete_obj.gif"
+                  label="Disable Coq integration"
+                  style="push">
+               <visibleWhen
+                     checkEnabled="true">
+                  <iterate
+                        operator="and">
+                     <adapt
+                           type="org.eclipse.core.resources.IProject">
+                        <and>
+                           <test
+                                 property="org.eclipse.core.resources.projectNature"
+                                 value="dk.itu.sdg.kopitiam.CoqNature">
+                           </test>
+                           <test
+                                 property="org.eclipse.core.resources.projectNature"
+                                 value="org.eclipse.jdt.core.javanature">
+                           </test>
+                        </and>
+                     </adapt>
+                  </iterate>
+               </visibleWhen>
+            </command>
+         </menu>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="dk.itu.turbocharger.ConfigureHandler"
+            commandId="dk.itu.turbocharger:command.enable">
+      </handler>
+      <handler
+            class="dk.itu.turbocharger.UnconfigureHandler"
+            commandId="dk.itu.turbocharger:command.disable">
+      </handler>
+   </extension>
 
 </plugin>
