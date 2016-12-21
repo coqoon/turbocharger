@@ -219,11 +219,12 @@ class DecoratedJavaEditor
 
         if (!toDelete.isEmpty || !errorsToAdd.isEmpty ||
             !errorsToDelete.isEmpty)
-          getFile.foreach(file =>
+          /* FIXME: Coqoon errors are now created through the model */
+          (/*getFile.foreach(file =>
             new dk.itu.coqoon.ui.pide.UpdateErrorsJob(file,
                 ls.node.commands,
                 toDelete.map(_._1) ++ errorsToDelete,
-                errorsToAdd).schedule)
+                errorsToAdd).schedule)*/)
       }
 
       lastCommand match {
