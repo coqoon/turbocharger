@@ -36,6 +36,7 @@ class DecoratedJavaReconciler(
             case e : UnsupportedException =>
               Left(e)
           }
+        pideDoc.right.foreach(h => print(h.mkString("\n")))
 
         /* XXX: this used to be synchronised on the commands lock; should we
          * synchronise on something else now that the lock is hidden? */
