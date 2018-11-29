@@ -29,7 +29,7 @@ object DecoratedJavaEditorSourceViewerConfiguration {
   }
 
   def addDamagerRepairers(pr : PresentationReconciler) = {
-    import dk.itu.coqoon.ui.{
+    import dk.itu.coqoon.ui.editors.{
       CoqTokenScanner, StringTokenScanner, CommentTokenScanner}
     import DecoratedJavaPartitions.Types._
     import org.eclipse.jface.text.rules.RuleBasedScanner

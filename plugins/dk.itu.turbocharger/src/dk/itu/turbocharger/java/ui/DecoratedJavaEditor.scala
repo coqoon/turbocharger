@@ -1,9 +1,9 @@
 package dk.itu.turbocharger.java.ui
 
-import dk.itu.coqoon.ui.{
-  CoqGoalsContainer, CoqoonUIPreferences, ManifestIdentifiers}
-import dk.itu.coqoon.ui.pide.{Perspective, PIDESessionHost}
+import dk.itu.coqoon.ui.{CoqoonUIPreferences, ManifestIdentifiers}
 import dk.itu.coqoon.ui.text.TokeniserPartitioner
+import dk.itu.coqoon.ui.editors.CoqGoalsContainer
+import dk.itu.coqoon.ui.editors.pide.{Perspective, PIDESessionHost}
 import dk.itu.turbocharger.java.DecoratedJavaPartitions
 
 import org.eclipse.ui.editors.text.{
@@ -64,7 +64,7 @@ class DecoratedJavaEditor
 
   private var lastCommand : Option[Command] = None
 
-  import dk.itu.coqoon.ui.pide.Responses
+  import dk.itu.coqoon.ui.editors.pide.Responses
   import dk.itu.coqoon.ui.utilities.UIUtils.asyncExec
   private def caretPing() =
     asyncExec {
@@ -110,7 +110,7 @@ class DecoratedJavaEditor
   private var annotations : Map[Command, Seq[Annotation]] = Map()
 
   override protected def commandsUpdated(changed : Seq[Command]) = {
-    import dk.itu.coqoon.ui.pide.Responses
+    import dk.itu.coqoon.ui.editors.pide.Responses
     val ls = getLastSnapshot.get
     val changedResultsAndMarkup = ({
       for (c <- changed)
